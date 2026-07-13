@@ -6,6 +6,7 @@ import {Action, Card, LabScreen} from '../components/Lab';
 import {styles} from '../styles';
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 const tests: Array<[keyof RootStackParamList, string, string]> = [
+  ['Studio','Note studio','A production-style dark canvas with floating brush controls'],
   ['Capabilities','Platform capabilities','Devices, Android versions, Ink and handwriting support'],
   ['MotionData','MotionEvent data','Pressure, tilt, orientation, distance and prediction'],
   ['Drawing','Ink and brushes','Drawing, sketching, annotation, tools and persistence'],

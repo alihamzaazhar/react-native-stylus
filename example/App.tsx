@@ -16,6 +16,7 @@ import {ImmersiveScreen} from './src/screens/ImmersiveScreen';
 import {DocumentEditingScreen} from './src/screens/DocumentEditingScreen';
 import {AnnotationScreen} from './src/screens/AnnotationScreen';
 import {CanvasEditorScreen} from './src/screens/CanvasEditorScreen';
+import {NoteStudioScreen} from './src/screens/NoteStudioScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -23,6 +24,7 @@ export default function App() {
   return <SafeAreaProvider><StatusBar barStyle="dark-content" backgroundColor="#f4f0e7" />
     <NavigationContainer><Stack.Navigator screenOptions={{headerStyle: {backgroundColor: '#f4f0e7'}, headerTintColor: '#17211b', contentStyle: {backgroundColor: '#f4f0e7'}}}>
       <Stack.Screen name="Home" component={HomeScreen} options={{title: 'Stylus Lab'}} />
+      <Stack.Screen name="Studio" component={NoteStudioScreen} options={{headerShown: false}} />
       <Stack.Screen name="Capabilities" component={CapabilitiesScreen} />
       <Stack.Screen name="MotionData" component={MotionDataScreen} options={{title: 'MotionEvent data'}} />
       <Stack.Screen name="Drawing" component={DrawingScreen} options={{title: 'Ink and brushes'}} />
