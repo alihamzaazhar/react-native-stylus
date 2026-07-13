@@ -25,6 +25,17 @@ public final class StylusCanvasManager extends SimpleViewManager<StylusCanvasVie
   @ReactProp(name="brush") @Override public void setBrush(StylusCanvasView v, String x) { v.setBrush(x); }
   @ReactProp(name="brushDynamicsJson") @Override public void setBrushDynamicsJson(StylusCanvasView v, String x) { v.setBrushDynamicsJson(x); }
   @ReactProp(name="eraserMode") @Override public void setEraserMode(StylusCanvasView v, String x) { v.setEraserMode(x); }
+  @ReactProp(name="viewportScale", defaultFloat=1f) @Override public void setViewportScale(StylusCanvasView v, float x) { v.setViewportScale(x); }
+  @ReactProp(name="viewportOffsetX", defaultFloat=0f) @Override public void setViewportOffsetX(StylusCanvasView v, float x) { v.setViewportOffsetX(x); }
+  @ReactProp(name="viewportOffsetY", defaultFloat=0f) @Override public void setViewportOffsetY(StylusCanvasView v, float x) { v.setViewportOffsetY(x); }
+  @ReactProp(name="viewportRotation", defaultFloat=0f) @Override public void setViewportRotation(StylusCanvasView v, float x) { v.setViewportRotation(x); }
+  @ReactProp(name="viewportGesturesEnabled", defaultBoolean=false) @Override public void setViewportGesturesEnabled(StylusCanvasView v, boolean x) { v.setViewportGesturesEnabled(x); }
+  @ReactProp(name="resetViewportToken", defaultInt=0) @Override public void setResetViewportToken(StylusCanvasView v, int x) { v.setResetViewportToken(x); }
+  @ReactProp(name="selectionMode") @Override public void setSelectionMode(StylusCanvasView v, String x) { v.setSelectionMode(x); }
+  @ReactProp(name="selectedStrokeIdsJson") @Override public void setSelectedStrokeIdsJson(StylusCanvasView v, String x) { v.setSelectedStrokeIdsJson(x); }
+  @ReactProp(name="selectionTransformJson") @Override public void setSelectionTransformJson(StylusCanvasView v, String x) { v.setSelectionTransformJson(x); }
+  @ReactProp(name="deleteSelectionToken", defaultInt=0) @Override public void setDeleteSelectionToken(StylusCanvasView v, int x) { v.setDeleteSelectionToken(x); }
+  @ReactProp(name="duplicateSelectionToken", defaultInt=0) @Override public void setDuplicateSelectionToken(StylusCanvasView v, int x) { v.setDuplicateSelectionToken(x); }
   @ReactProp(name="tiltEnabled", defaultBoolean=true) @Override public void setTiltEnabled(StylusCanvasView v, boolean x) { v.setTiltEnabled(x); }
   @ReactProp(name="directionEnabled", defaultBoolean=true) @Override public void setDirectionEnabled(StylusCanvasView v, boolean x) { v.setDirectionEnabled(x); }
   @ReactProp(name="brushPreviewEnabled", defaultBoolean=true) @Override public void setBrushPreviewEnabled(StylusCanvasView v, boolean x) { v.setBrushPreviewEnabled(x); }
@@ -44,6 +55,8 @@ public final class StylusCanvasManager extends SimpleViewManager<StylusCanvasVie
   @Override public Map<String, Object> getExportedCustomDirectEventTypeConstants() {
     return MapBuilder.<String, Object>builder()
       .put("topStylusEvent", MapBuilder.of("registrationName", "onStylusEvent"))
-      .put("topStrokesChanged", MapBuilder.of("registrationName", "onStrokesChanged")).build();
+      .put("topStrokesChanged", MapBuilder.of("registrationName", "onStrokesChanged"))
+      .put("topViewportChanged", MapBuilder.of("registrationName", "onViewportChanged"))
+      .put("topSelectionChanged", MapBuilder.of("registrationName", "onSelectionChanged")).build();
   }
 }

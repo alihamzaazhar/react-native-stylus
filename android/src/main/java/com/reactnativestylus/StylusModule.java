@@ -105,6 +105,16 @@ public final class StylusModule extends NativeStylusModuleSpec implements InputM
     promise.resolve(value == null ? "" : value.toString());
   }
 
+  @Override public void exportDocumentPng(String documentJson, String outputName, double maxDimension, Promise promise) {
+    try { promise.resolve(StylusDocumentRenderer.export(getReactApplicationContext(), documentJson, outputName, (int) maxDimension, false)); }
+    catch (Exception error) { promise.reject("stylus_export_png", error); }
+  }
+
+  @Override public void flattenAnnotationPng(String annotationJson, String outputName, double maxDimension, Promise promise) {
+    try { promise.resolve(StylusDocumentRenderer.export(getReactApplicationContext(), annotationJson, outputName, (int) maxDimension, true)); }
+    catch (Exception error) { promise.reject("stylus_flatten_annotation", error); }
+  }
+
   @Override public void getCapabilities(Promise promise) {
     try {
       JSONObject result = new JSONObject();

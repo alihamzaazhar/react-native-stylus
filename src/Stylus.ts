@@ -16,6 +16,8 @@ export const Stylus = {
   showInputMethodPicker: (): void => NativeStylusModule.showInputMethodPicker(),
   setClipboardText: (value: string, label = 'Stylus content'): void => NativeStylusModule.setClipboardText(label, value),
   getClipboardText: (): Promise<string> => NativeStylusModule.getClipboardText(),
+  exportDocumentPng: (document: import('./types').StylusDocument, outputName = 'stylus-document.png', maxDimension = 4096): Promise<string> => NativeStylusModule.exportDocumentPng(JSON.stringify(document), outputName, maxDimension),
+  flattenAnnotationPng: (document: import('./types').StylusAnnotationDocument, outputName = 'stylus-annotation.png', maxDimension = 4096): Promise<string> => NativeStylusModule.flattenAnnotationPng(JSON.stringify(document), outputName, maxDimension),
   addDeviceChangeListener(listener: (devices: StylusDevice[]) => void): () => void {
     const subscription = NativeStylusModule.onDevicesChanged((json) => listener(JSON.parse(json) as StylusDevice[]));
     return () => subscription.remove();

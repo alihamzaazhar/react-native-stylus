@@ -82,6 +82,27 @@ export function Drawing() {
 
 Increment `clearToken`, `undoToken`, or `redoToken` to execute that native operation. Pass exported `strokes` back to restore a drawing. Set `fingerDrawingEnabled` when touch drawing is desired; it defaults to stylus-only input.
 
+### Viewport And Selection
+
+Enable `viewportGesturesEnabled` to reserve finger input for one-finger pan and two-finger pinch zoom while stylus input continues drawing. Strokes remain in document coordinates. `viewport.rotation` uses degrees; selection transform rotation uses radians.
+
+```tsx
+<StylusCanvas
+  strokes={strokes}
+  viewport={viewport}
+  viewportGesturesEnabled
+  onViewportChange={setViewport}
+  selectionMode={lassoEnabled ? 'lasso' : 'none'}
+  selectedStrokeIds={selection.strokeIds}
+  onSelectionChange={setSelection}
+  selectionTransform={{token: transformToken, translateX: 20, rotation: Math.PI / 16}}
+  duplicateSelectionToken={duplicateToken}
+  deleteSelectionToken={deleteToken}
+/>
+```
+
+The lasso, selection bounds, and edit operations run natively. Transform, duplicate, and delete operations publish updated document-coordinate strokes through `onStrokesChange`.
+
 Every `onStylusEvent` payload includes `diagnostics` with event age, historical sample count, prediction availability, and estimated sample rate. `resolveStylusButtonActions()` maps Android button-state masks to application actions such as erase, select, pan, context menu, undo, or custom commands.
 
 ## Handwriting Input
@@ -218,7 +239,14 @@ await autosave.flush(annotation);
 Stylus.setClipboardText(serializeAnnotationDocument(annotation), 'Stylus annotation');
 ```
 
-The storage interface is injectable, so applications can use AsyncStorage, SQLite, files, or cloud persistence without adding those dependencies to this package. PDF/image flattening remains the responsibility of the selected renderer; the library exports editable JSON and SVG overlays.
+The storage interface is injectable, so applications can use AsyncStorage, SQLite, files, or cloud persistence without adding those dependencies to this package. Editable JSON and SVG overlays remain available independently of flattening.
+
+Native PNG export returns an absolute cache-file path. `flattenAnnotationPng` renders a content-URI image or zero-based PDF page before compositing strokes and shapes.
+
+```ts
+const drawingPath = await Stylus.exportDocumentPng(document, 'drawing.png', 4096);
+const flattenedPath = await Stylus.flattenAnnotationPng(annotation, 'annotated-page.png', 4096);
+```
 
 ## Example
 

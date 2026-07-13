@@ -21,6 +21,7 @@ export interface NativeProps extends ViewProps {
   hoverFocusEnabled?: boolean;
   onTextChanged?: CodegenTypes.DirectEventHandler<Readonly<{text: string}>>;
   onHandwritingStatus?: CodegenTypes.DirectEventHandler<Readonly<{supported: boolean; focused: boolean}>>;
+  onHandwritingGesture?: CodegenTypes.DirectEventHandler<Readonly<{gestureType: string; phase: string; result: CodegenTypes.Int32}>>;
 }
 
 export default codegenNativeComponent<NativeProps>('StylusHandwritingInput') as HostComponent<NativeProps>;

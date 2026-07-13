@@ -11,6 +11,7 @@ const tests: Array<[keyof RootStackParamList, string, string]> = [
   ['Drawing','Ink and brushes','Drawing, sketching, annotation, tools and persistence'],
   ['DocumentEditing','Document editing','Layers, transforms, shapes, selection and export'],
   ['Annotation','Annotation','Editable image/PDF overlays, autosave and clipboard'],
+  ['CanvasEditor','Canvas editor','Pan, zoom, lasso, transforms and PNG export'],
   ['Handwriting','Handwriting','Android 14 IME handwriting and bounds'],
   ['Hover','Hover and cursors','Preview, focus and cursor behavior'],
   ['Palm','Palm rejection','Canceled touches and stray-mark removal'],
