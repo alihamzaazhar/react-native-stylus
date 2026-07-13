@@ -1,5 +1,5 @@
 export type RootStackParamList = {
-  Home: undefined; Capabilities: undefined; MotionData: undefined; Drawing: undefined;
+  Home: undefined; Studio: undefined; Capabilities: undefined; MotionData: undefined; Drawing: undefined;
   DocumentEditing: undefined;
   Annotation: undefined;
   CanvasEditor: undefined;
