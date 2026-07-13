@@ -56,6 +56,14 @@ export function Drawing() {
       strokeWidth={8}
       tool="pen"
       brush="pressurePen"
+      brushDynamics={{
+        minimumWidth: 1,
+        maximumWidth: 24,
+        pressureGamma: 0.8,
+        velocitySensitivity: 0.25,
+        smoothing: 0.35,
+      }}
+      eraserMode="partial"
       pressureEnabled
       tiltEnabled
       directionEnabled
@@ -73,6 +81,8 @@ export function Drawing() {
 ```
 
 Increment `clearToken`, `undoToken`, or `redoToken` to execute that native operation. Pass exported `strokes` back to restore a drawing. Set `fingerDrawingEnabled` when touch drawing is desired; it defaults to stylus-only input.
+
+Every `onStylusEvent` payload includes `diagnostics` with event age, historical sample count, prediction availability, and estimated sample rate. `resolveStylusButtonActions()` maps Android button-state masks to application actions such as erase, select, pan, context menu, undo, or custom commands.
 
 ## Handwriting Input
 

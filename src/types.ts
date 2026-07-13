@@ -26,6 +26,34 @@ export interface StylusInputEvent {
   predicted: StylusPoint | null;
   canceled: boolean;
   palmRejected: boolean;
+  diagnostics: StylusEventDiagnostics;
+}
+
+export interface StylusEventDiagnostics {
+  eventAgeMs: number;
+  historicalSampleCount: number;
+  predictedSampleAvailable: boolean;
+  estimatedSampleRateHz: number;
+}
+
+export interface StylusBrushDynamics {
+  minimumWidth?: number;
+  maximumWidth?: number;
+  pressureGamma?: number;
+  velocitySensitivity?: number;
+  tiltSensitivity?: number;
+  directionSensitivity?: number;
+  smoothing?: number;
+}
+
+export type StylusButtonAction = 'none' | 'erase' | 'select' | 'pan' | 'contextMenu' | 'undo' | 'redo' | string;
+
+export interface StylusButtonMapping {
+  primary?: StylusButtonAction;
+  secondary?: StylusButtonAction;
+  tertiary?: StylusButtonAction;
+  stylusPrimary?: StylusButtonAction;
+  stylusSecondary?: StylusButtonAction;
 }
 
 export interface StylusDevice {
