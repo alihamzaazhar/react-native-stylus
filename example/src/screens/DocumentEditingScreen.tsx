@@ -29,8 +29,8 @@ export function DocumentEditingScreen() {
   return <LabScreen eyebrow="DOCUMENT MODEL" title="Edit reusable ink documents">
     <Text style={styles.body}>This screen uses the versioned document API. Drawings can be assigned to layers, transformed, duplicated, serialized, and exported as SVG.</Text>
     <Card>
-      <View style={{height: 320, backgroundColor: '#fffdf5', borderRadius: 16, overflow: 'hidden'}}>
-        <StylusCanvas style={{flex: 1}} strokes={document.strokes} fingerDrawingEnabled color="#173b32" strokeWidth={7} onStrokesChange={updateStrokes} />
+      <View style={styles.documentCanvas}>
+        <StylusCanvas style={styles.fill} strokes={document.strokes} fingerDrawingEnabled color="#173b32" strokeWidth={7} onStrokesChange={updateStrokes} />
       </View>
     </Card>
     <Card>

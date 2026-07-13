@@ -20,5 +20,5 @@ const tests: Array<[keyof RootStackParamList, string, string]> = [
 ];
 export function HomeScreen({navigation}: Props) { return <LabScreen eyebrow="RN 0.86 · FABRIC · TURBOMODULE" title="Android stylus capability lab">
   <Text style={styles.body}>Every screen isolates one documented Android stylus behavior. Results come from this app and device, not Samsung-specific APIs.</Text>
-  {tests.map(([route,title,description]) => <Card key={route}><Text style={{fontSize:18,fontWeight:'800'}}>{title}</Text><Text style={styles.body}>{description}</Text><Action label="Open test" onPress={() => navigation.navigate(route)} /></Card>)}
+  {tests.map(([route,title,description]) => <Card key={route}><Text style={styles.cardTitle}>{title}</Text><Text style={styles.body}>{description}</Text><Action label="Open test" onPress={() => navigation.navigate(route)} /></Card>)}
   </LabScreen>; }
