@@ -5,3 +5,4 @@ export {StylusHandwritingInput} from './StylusHandwritingInput';
 export type {StylusHandwritingInputProps} from './StylusHandwritingInput';
 export type * from './types';
 export * from './document';
+export * from './input';

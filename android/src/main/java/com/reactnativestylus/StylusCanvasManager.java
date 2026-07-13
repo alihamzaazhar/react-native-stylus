@@ -23,6 +23,8 @@ public final class StylusCanvasManager extends SimpleViewManager<StylusCanvasVie
   @ReactProp(name="opacity", defaultFloat=1f) @Override public void setOpacity(StylusCanvasView v, float x) { v.setOpacity(x); }
   @ReactProp(name="tool") @Override public void setTool(StylusCanvasView v, String x) { v.setTool(x); }
   @ReactProp(name="brush") @Override public void setBrush(StylusCanvasView v, String x) { v.setBrush(x); }
+  @ReactProp(name="brushDynamicsJson") @Override public void setBrushDynamicsJson(StylusCanvasView v, String x) { v.setBrushDynamicsJson(x); }
+  @ReactProp(name="eraserMode") @Override public void setEraserMode(StylusCanvasView v, String x) { v.setEraserMode(x); }
   @ReactProp(name="tiltEnabled", defaultBoolean=true) @Override public void setTiltEnabled(StylusCanvasView v, boolean x) { v.setTiltEnabled(x); }
   @ReactProp(name="directionEnabled", defaultBoolean=true) @Override public void setDirectionEnabled(StylusCanvasView v, boolean x) { v.setDirectionEnabled(x); }
   @ReactProp(name="brushPreviewEnabled", defaultBoolean=true) @Override public void setBrushPreviewEnabled(StylusCanvasView v, boolean x) { v.setBrushPreviewEnabled(x); }

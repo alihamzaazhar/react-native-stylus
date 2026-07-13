@@ -7,6 +7,8 @@ export interface NativeProps extends ViewProps {
   opacity?: CodegenTypes.Float;
   tool?: string;
   brush?: string;
+  brushDynamicsJson?: string;
+  eraserMode?: string;
   tiltEnabled?: boolean;
   directionEnabled?: boolean;
   brushPreviewEnabled?: boolean;
