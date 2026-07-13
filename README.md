@@ -96,6 +96,34 @@ import {StylusHandwritingInput} from 'react-native-stylus';
 
 On Android 14+, compatible IMEs can write directly into the native editor. Use `Stylus.showInputMethodPicker()` to let the tester select a handwriting-capable keyboard.
 
+## Editable Documents
+
+The document API keeps native stroke capture separate from application editing state. It supports versioned JSON, layers, metadata, shapes, lasso selection, duplication, affine transforms, whole-stroke erasing, bounds, and SVG export.
+
+```ts
+import {
+  createStylusDocument,
+  createStylusLayer,
+  exportStylusDocumentToSvg,
+  selectStrokesByLasso,
+  serializeStylusDocument,
+  transformStrokes,
+} from 'react-native-stylus';
+
+const document = createStylusDocument({metadata: {title: 'Meeting notes'}});
+const secondLayer = createStylusLayer('Annotations');
+document.layers.push(secondLayer);
+
+const selectedIds = selectStrokesByLasso(document.strokes, lassoPoints);
+const moved = transformStrokes(
+  document.strokes.filter(stroke => selectedIds.includes(stroke.id)),
+  {translateX: 24, translateY: 12, rotation: Math.PI / 16},
+);
+
+const json = serializeStylusDocument(document);
+const svg = exportStylusDocumentToSvg(document);
+```
+
 ## Platform API
 
 ```ts
