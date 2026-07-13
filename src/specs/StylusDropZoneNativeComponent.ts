@@ -1,5 +1,5 @@
-import type {CodegenTypes, HostComponent, ViewProps} from 'react-native';
-import codegenNativeComponent from 'react-native/Libraries/Utilities/codegenNativeComponent';
+import {codegenNativeComponent} from 'react-native';
+import type {CodegenTypes, ViewProps} from 'react-native';
 
 export interface NativeProps extends ViewProps {
   payload?: string;
@@ -7,4 +7,4 @@ export interface NativeProps extends ViewProps {
   dropEnabled?: boolean;
   onStylusDrag?: CodegenTypes.DirectEventHandler<Readonly<{action: string; x: CodegenTypes.Float; y: CodegenTypes.Float; payload: string; mimeType: string}>>;
 }
-export default codegenNativeComponent<NativeProps>('StylusDropZone') as HostComponent<NativeProps>;
+export default codegenNativeComponent<NativeProps>('StylusDropZone');
