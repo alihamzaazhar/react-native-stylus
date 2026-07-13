@@ -1,5 +1,5 @@
 import NativeStylusModule from './native';
-import type {StylusCapabilities, StylusDevice} from './types';
+import type {StylusCapabilities, StylusDevice, StylusPlatformFeatures} from './types';
 
 export const Stylus = {
   isSupported: (): Promise<boolean> => NativeStylusModule.isStylusSupported(),
@@ -9,6 +9,11 @@ export const Stylus = {
   async getCapabilities(): Promise<StylusCapabilities> {
     return JSON.parse(await NativeStylusModule.getCapabilities()) as StylusCapabilities;
   },
+  async getPlatformFeatures(): Promise<StylusPlatformFeatures> {
+    return JSON.parse(await NativeStylusModule.getPlatformFeatures()) as StylusPlatformFeatures;
+  },
+  setImmersiveMode: (enabled: boolean): Promise<boolean> => NativeStylusModule.setImmersiveMode(enabled),
+  showInputMethodPicker: (): void => NativeStylusModule.showInputMethodPicker(),
   addDeviceChangeListener(listener: (devices: StylusDevice[]) => void): () => void {
     const subscription = NativeStylusModule.onDevicesChanged((json) => listener(JSON.parse(json) as StylusDevice[]));
     return () => subscription.remove();

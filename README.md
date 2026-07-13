@@ -1,20 +1,35 @@
 # react-native-stylus
 
-Generic Android stylus input and pressure-sensitive drawing for React Native 0.86 New Architecture applications.
+Device-neutral Android stylus APIs for React Native 0.86 New Architecture applications. The package uses a TurboModule for platform services and Codegen Fabric components for drawing and handwriting input.
 
-## Features
+Samsung Air Actions and S Pen insertion state are intentionally outside this package.
 
-- Fabric `StylusCanvas` rendered natively without routing drawing through the JS thread
-- TurboModule device discovery and hot-plug events
-- Pressure, tilt, orientation, hover distance, contact size, pointer IDs, and buttons
-- Historical/coalesced samples and Jetpack motion prediction
-- Stylus, hardware eraser, finger, and mouse tool classification
-- Android palm-rejection cancellation through `ACTION_CANCEL` and `FLAG_CANCELED`
-- Pen, translucent highlighter, and stroke eraser tools
-- Undo, redo, clear, controlled stroke import, and JSON stroke export
-- React Native 0.86 Codegen, TurboModules, Fabric, and autolinking
+## Capabilities
 
-This package is device-neutral. Samsung Air Actions, S Pen insertion state, and the proprietary Samsung Remote SDK belong in `react-native-s-pen`.
+| Area | Implementation |
+| --- | --- |
+| Pressure, tilt, orientation, position, distance, size, buttons | Native `MotionEvent` samples, history, and typed JS events |
+| Drawing, note-taking, sketching, annotation | Fabric `StylusCanvas` with persistent stroke data, undo, redo, clear, import, and export |
+| Low-latency ink | AndroidX Ink 1.0 `InProgressStrokesView`; uses its API 29+ front-buffer renderer and compatible fallbacks |
+| Motion prediction | AndroidX `MotionEventPredictor`; predicted samples are emitted but never persisted |
+| Brushes | AndroidX Ink pressure pen, marker, and highlighter plus calligraphy/custom committed-stroke rendering |
+| Hover | Hover events, brush preview, focus behavior, and pointer icon selection |
+| Palm rejection | Honors `ACTION_CANCEL` and Android 13+ `FLAG_CANCELED`; canceled strokes are discarded |
+| Handwriting | Native `EditText` Fabric component with Android 14+ automatic handwriting, bounds offsets, and delegation |
+| Text selection and navigation | Native text editor behavior supplied by Android and the selected IME |
+| Immersive drawing | TurboModule API for transient system bars and fullscreen drawing |
+| Device discovery | Connected stylus enumeration and hot-plug notifications |
+| Phones, tablets, foldables, ChromeOS | Runtime feature reporting; layouts remain controlled by the host app |
+
+Handwriting recognition is performed by the user's compatible Android IME, not by this npm package. Drag/drop policy, document semantics, WebView content, custom `InputConnection` editors, and large-screen layout are application concerns; this library exposes stylus data and native primitives without pretending to own those workflows.
+
+## Requirements
+
+- React Native `0.86.x`
+- New Architecture enabled
+- Android API 24 minimum
+- Android 14/API 34 or newer for platform handwriting APIs
+- A handwriting-capable IME for handwriting recognition
 
 ## Install
 
@@ -22,39 +37,66 @@ This package is device-neutral. Samsung Air Actions, S Pen insertion state, and 
 npm install react-native-stylus
 ```
 
-Android is currently supported. React Native New Architecture must be enabled.
+Rebuild the Android application after installation. Autolinking registers the TurboModule and both Fabric components.
 
-## Canvas
+## Low-Latency Canvas
 
 ```tsx
 import {useState} from 'react';
 import {StylusCanvas, type StylusStroke} from 'react-native-stylus';
 
 export function Drawing() {
-  const [clearToken, setClearToken] = useState(0);
-  const [undoToken, setUndoToken] = useState(0);
   const [strokes, setStrokes] = useState<StylusStroke[]>([]);
+  const [undoToken, setUndoToken] = useState(0);
 
   return (
     <StylusCanvas
-      style={{height: 500}}
-      color="#152238"
-      strokeWidth={10}
+      style={{height: 500, backgroundColor: '#fffdf5'}}
+      color="#16332c"
+      strokeWidth={8}
       tool="pen"
+      brush="pressurePen"
       pressureEnabled
+      tiltEnabled
+      directionEnabled
       predictionEnabled
-      clearToken={clearToken}
+      brushPreviewEnabled
+      pointerIcon="crosshair"
       undoToken={undoToken}
-      onStylusEvent={(event) => console.log(event.point.pressure, event.point.tilt)}
-      onStrokesChange={(next) => setStrokes(next)}
+      onStylusEvent={event => {
+        console.log(event.point.pressure, event.point.tilt, event.predicted);
+      }}
+      onStrokesChange={setStrokes}
     />
   );
 }
 ```
 
-Increment `clearToken`, `undoToken`, or `redoToken` to invoke the corresponding native operation. Pass previously exported `strokes` to restore a drawing.
+Increment `clearToken`, `undoToken`, or `redoToken` to execute that native operation. Pass exported `strokes` back to restore a drawing. Set `fingerDrawingEnabled` when touch drawing is desired; it defaults to stylus-only input.
 
-## Device API
+## Handwriting Input
+
+```tsx
+import {StylusHandwritingInput} from 'react-native-stylus';
+
+<StylusHandwritingInput
+  style={{minHeight: 140}}
+  hint="Write here with a stylus"
+  multiline
+  autoHandwritingEnabled
+  handwritingBoundsOffsetLeft={24}
+  handwritingBoundsOffsetTop={24}
+  handwritingBoundsOffsetRight={24}
+  handwritingBoundsOffsetBottom={24}
+  hoverFocusEnabled
+  onTextChange={setText}
+  onFocusChange={setFocused}
+/>
+```
+
+On Android 14+, compatible IMEs can write directly into the native editor. Use `Stylus.showInputMethodPicker()` to let the tester select a handwriting-capable keyboard.
+
+## Platform API
 
 ```ts
 import {Stylus} from 'react-native-stylus';
@@ -62,21 +104,41 @@ import {Stylus} from 'react-native-stylus';
 const supported = await Stylus.isSupported();
 const devices = await Stylus.getDevices();
 const capabilities = await Stylus.getCapabilities();
+const platform = await Stylus.getPlatformFeatures();
 
-const remove = Stylus.addDeviceChangeListener((nextDevices) => {
+const remove = Stylus.addDeviceChangeListener(nextDevices => {
   console.log(nextDevices);
 });
+
+await Stylus.setImmersiveMode(true);
+Stylus.showInputMethodPicker();
 ```
 
-## Latency behavior
+## Example
 
-The canvas renders synchronously in a native Android `View`, consumes batched historical samples, and uses AndroidX `MotionEventPredictor` for temporary predicted points. Predicted points are emitted separately and are never committed to exported strokes. Android reports whether front-buffer rendering is supported through `lowLatencyFrontBufferSupported`; the current renderer does not claim to use OpenGL front-buffer rendering.
+The standalone React Native 0.86 app in `example/` has separate screens for capabilities, raw motion data, AndroidX Ink drawing, handwriting, hover, palm cancellation, selection/navigation, and immersive mode.
 
-## Platform details
+```sh
+cd example
+npm install
+npm start
+```
 
-- Minimum Android API: 24
-- `FLAG_CANCELED` palm metadata requires Android 13; `ACTION_CANCEL` works on older versions.
-- Motion prediction uses `androidx.input:input-motionprediction:1.0.0-beta01`.
-- Hover distance is hardware-specific and must not be interpreted as a physical unit.
+In another terminal:
 
-See the [Android stylus guide](https://developer.android.com/develop/ui/views/touch-and-input/stylus-input) for platform semantics.
+```sh
+cd example
+npm run android
+```
+
+Use physical stylus hardware for pressure, tilt, hover, palm cancellation, and latency testing. Emulator mouse input cannot validate those hardware signals.
+
+## Android Dependencies
+
+The package declares AndroidX Ink `1.0.0` modules and `androidx.input:input-motionprediction:1.0.0-beta01` transitively. Consumers do not copy JAR or AAR files.
+
+## References
+
+- [Android stylus input](https://developer.android.com/develop/ui/views/touch-and-input/stylus-input)
+- [Advanced stylus features](https://developer.android.com/develop/ui/views/touch-and-input/stylus-input/advanced-stylus-features)
+- [AndroidX Ink](https://developer.android.com/jetpack/androidx/releases/ink)

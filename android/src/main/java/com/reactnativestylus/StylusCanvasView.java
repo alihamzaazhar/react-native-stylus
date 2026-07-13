@@ -9,6 +9,14 @@ import android.os.Build;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.PointerIcon;
+import android.widget.FrameLayout;
+import androidx.ink.authoring.InProgressStrokeId;
+import androidx.ink.authoring.InProgressStrokesFinishedListener;
+import androidx.ink.authoring.InProgressStrokesView;
+import androidx.ink.brush.Brush;
+import androidx.ink.brush.BrushFamily;
+import androidx.ink.brush.StockBrushes;
 import androidx.input.motionprediction.MotionEventPredictor;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
@@ -19,7 +27,7 @@ import java.util.UUID;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-final class StylusCanvasView extends View {
+final class StylusCanvasView extends FrameLayout {
   private static final class Stroke {
     String id = UUID.randomUUID().toString();
     int color; float width, opacity; String tool;
@@ -30,18 +38,37 @@ final class StylusCanvasView extends View {
   private final List<Stroke> redo = new ArrayList<>();
   private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
   private final MotionEventPredictor predictor;
+  private final InProgressStrokesView inkView;
+  private InProgressStrokeId inkStroke;
   private Stroke current;
   private int color = Color.BLACK;
   private float strokeWidth = 6f, opacity = 1f;
   private String tool = "pen";
+  private String brush = "pressurePen";
   private boolean pressureEnabled = true, predictionEnabled = true, fingerDrawingEnabled, hoverEnabled = true;
+  private boolean tiltEnabled = true, directionEnabled = true, brushPreviewEnabled = true;
+  private float hoverX, hoverY, hoverPressure, hoverTilt;
+  private boolean hovering;
   private int clearToken, undoToken, redoToken;
 
   StylusCanvasView(Context context) {
     super(context);
+    setWillNotDraw(false);
     setBackgroundColor(Color.TRANSPARENT);
     setFocusable(true);
     predictor = MotionEventPredictor.newInstance(this);
+    inkView = new InProgressStrokesView(context);
+    inkView.setClickable(false);
+    inkView.setFocusable(false);
+    inkView.setUseHighLatencyRenderHelper(false);
+    inkView.addFinishedStrokesListener(new InProgressStrokesFinishedListener() {
+      @Override public void onStrokesFinished(java.util.Map<InProgressStrokeId, androidx.ink.strokes.Stroke> finished) {
+        inkView.removeFinishedStrokes(finished.keySet());
+        invalidate();
+      }
+    });
+    addView(inkView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+    inkView.eagerInit();
     paint.setStrokeCap(Paint.Cap.ROUND);
     paint.setStrokeJoin(Paint.Join.ROUND);
     paint.setStyle(Paint.Style.STROKE);
@@ -51,6 +78,19 @@ final class StylusCanvasView extends View {
   void setStrokeWidth(float value) { strokeWidth = Math.max(0.5f, value); }
   void setOpacity(float value) { opacity = Math.max(0f, Math.min(1f, value)); }
   void setTool(String value) { tool = value == null ? "pen" : value; }
+  void setBrush(String value) { brush = value == null ? "pressurePen" : value; }
+  void setTiltEnabled(boolean value) { tiltEnabled = value; }
+  void setDirectionEnabled(boolean value) { directionEnabled = value; }
+  void setBrushPreviewEnabled(boolean value) { brushPreviewEnabled = value; }
+  void setPointerIconName(String value) {
+    if (Build.VERSION.SDK_INT < 24) return;
+    int type = PointerIcon.TYPE_DEFAULT;
+    if ("crosshair".equals(value)) type = PointerIcon.TYPE_CROSSHAIR;
+    else if ("hand".equals(value)) type = PointerIcon.TYPE_HAND;
+    else if ("text".equals(value)) type = PointerIcon.TYPE_TEXT;
+    else if ("none".equals(value)) type = PointerIcon.TYPE_NULL;
+    setPointerIcon(PointerIcon.getSystemIcon(getContext(), type));
+  }
   void setPressureEnabled(boolean value) { pressureEnabled = value; }
   void setPredictionEnabled(boolean value) { predictionEnabled = value; }
   void setFingerDrawingEnabled(boolean value) { fingerDrawingEnabled = value; }
@@ -77,7 +117,11 @@ final class StylusCanvasView extends View {
 
   @Override public boolean onHoverEvent(MotionEvent event) {
     if (!hoverEnabled || !isStylus(event)) return super.onHoverEvent(event);
+    hoverX = event.getX(); hoverY = event.getY(); hoverPressure = event.getPressure();
+    hoverTilt = event.getAxisValue(MotionEvent.AXIS_TILT);
+    hovering = event.getActionMasked() != MotionEvent.ACTION_HOVER_EXIT;
     emitInput(event, actionName(event.getActionMasked()), false);
+    invalidate();
     return true;
   }
 
@@ -101,11 +145,20 @@ final class StylusCanvasView extends View {
     if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_DOWN) {
       getParent().requestDisallowInterceptTouchEvent(true);
       beginStroke(event);
+      if (!"eraser".equals(current.tool)) {
+        inkStroke = inkView.startStroke(event, event.getActionIndex(), createInkBrush());
+      }
     } else if (action == MotionEvent.ACTION_MOVE && current != null) {
+      if (inkStroke != null) inkView.addToStroke(event, 0, inkStroke);
       appendHistory(event);
       appendCurrent(event);
       if ("eraser".equals(current.tool)) eraseAt(event.getX(), event.getY(), current.width * 2f);
     } else if ((action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP) && current != null) {
+      if (inkStroke != null) {
+        if (canceled) inkView.cancelStroke(inkStroke, event);
+        else inkView.finishStroke(event, event.getActionIndex(), inkStroke);
+        inkStroke = null;
+      }
       appendCurrent(event);
       if (canceled) strokes.remove(current);
       current = null;
@@ -113,6 +166,7 @@ final class StylusCanvasView extends View {
       emitStrokes();
       getParent().requestDisallowInterceptTouchEvent(false);
     } else if (action == MotionEvent.ACTION_CANCEL) {
+      if (inkStroke != null) { inkView.cancelStroke(inkStroke, event); inkStroke = null; }
       if (current != null) strokes.remove(current);
       current = null;
       emitStrokes();
@@ -121,6 +175,20 @@ final class StylusCanvasView extends View {
     emitInput(event, actionName(action), canceled);
     invalidate();
     return true;
+  }
+
+  @Override public boolean onInterceptTouchEvent(MotionEvent event) {
+    return true;
+  }
+
+  private Brush createInkBrush() {
+    BrushFamily family;
+    if ("marker".equals(brush)) family = StockBrushes.marker();
+    else if ("highlighter".equals(brush) || "highlighter".equals(tool)) family = StockBrushes.highlighter();
+    else family = StockBrushes.pressurePen();
+    int alpha = Math.round(255f * opacity * ("highlighter".equals(tool) ? 0.45f : 1f));
+    int brushColor = Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color));
+    return Brush.createWithColorIntArgb(family, brushColor, strokeWidth, 0.1f);
   }
 
   private void beginStroke(MotionEvent event) {
@@ -153,15 +221,24 @@ final class StylusCanvasView extends View {
   @Override protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
     for (Stroke stroke : strokes) {
+      if (stroke == current && inkStroke != null) continue;
       if ("eraser".equals(stroke.tool) || stroke.points.size() < 2) continue;
       paint.setColor(stroke.color);
       paint.setAlpha(Math.round(255 * stroke.opacity * ("highlighter".equals(stroke.tool) ? 0.45f : 1f)));
       for (int i = 1; i < stroke.points.size(); i++) {
         StylusPoint a = stroke.points.get(i - 1), b = stroke.points.get(i);
         float pressure = pressureEnabled ? Math.max(0.08f, (a.pressure + b.pressure) * 0.5f) : 1f;
-        paint.setStrokeWidth(stroke.width * pressure);
+        float tiltFactor = tiltEnabled && "calligraphy".equals(brush) ? 1f + Math.abs(b.tilt) : 1f;
+        float directionFactor = directionEnabled && "calligraphy".equals(brush) ? 0.55f + 0.45f * Math.abs((float) Math.cos(b.orientation)) : 1f;
+        float brushFactor = "marker".equals(brush) ? 1.3f : 1f;
+        paint.setStrokeWidth(stroke.width * pressure * tiltFactor * directionFactor * brushFactor);
         canvas.drawLine(a.x, a.y, b.x, b.y, paint);
       }
+    }
+    if (hovering && brushPreviewEnabled) {
+      paint.setStyle(Paint.Style.STROKE); paint.setColor(color); paint.setAlpha(170);
+      paint.setStrokeWidth(2f); float factor = tiltEnabled ? 1f + hoverTilt * 0.5f : 1f;
+      canvas.drawCircle(hoverX, hoverY, Math.max(3f, strokeWidth * Math.max(0.2f, hoverPressure) * factor), paint);
     }
   }
 
@@ -209,7 +286,7 @@ final class StylusCanvasView extends View {
     return array;
   }
 
-  private void clear() { strokes.clear(); redo.clear(); current = null; invalidate(); emitStrokes(); }
+  private void clear() { strokes.clear(); redo.clear(); current = null; inkView.cancelUnfinishedStrokes(); inkStroke = null; invalidate(); emitStrokes(); }
   private void undo() { if (!strokes.isEmpty()) { redo.add(strokes.remove(strokes.size() - 1)); invalidate(); emitStrokes(); } }
   private void redo() { if (!redo.isEmpty()) { strokes.add(redo.remove(redo.size() - 1)); invalidate(); emitStrokes(); } }
 

@@ -3,6 +3,11 @@ package com.reactnativestylus;
 import android.content.Context;
 import android.hardware.input.InputManager;
 import android.os.Build;
+import android.app.Activity;
+import android.content.res.Configuration;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
+import android.view.inputmethod.InputMethodManager;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 import androidx.annotation.NonNull;
@@ -30,6 +35,50 @@ public final class StylusModule extends NativeStylusModuleSpec implements InputM
   @Override public void getStylusDevices(Promise promise) { promise.resolve(devicesJson().toString()); }
 
   @Override public void isStylusSupported(Promise promise) { promise.resolve(devicesJson().length() > 0); }
+
+  @Override public void getPlatformFeatures(Promise promise) {
+    try {
+      Configuration config = getReactApplicationContext().getResources().getConfiguration();
+      JSONObject result = new JSONObject();
+      result.put("androidApiLevel", Build.VERSION.SDK_INT);
+      result.put("handwritingTextFields", Build.VERSION.SDK_INT >= 34);
+      result.put("handwritingDelegation", Build.VERSION.SDK_INT >= 34);
+      result.put("handwritingBounds", Build.VERSION.SDK_INT >= 34);
+      result.put("canceledPalmFlag", Build.VERSION.SDK_INT >= 33);
+      result.put("motionPrediction", true);
+      result.put("inkApi", true);
+      result.put("frontBuffer", Build.VERSION.SDK_INT >= 29);
+      result.put("dragAndDrop", Build.VERSION.SDK_INT >= 24);
+      result.put("customPointerIcons", Build.VERSION.SDK_INT >= 24);
+      result.put("chromeOs", getReactApplicationContext().getPackageManager().hasSystemFeature("org.chromium.arc"));
+      result.put("largeScreen", config.smallestScreenWidthDp >= 600);
+      promise.resolve(result.toString());
+    } catch (Exception error) { promise.reject("stylus_platform_features", error); }
+  }
+
+  @Override public void setImmersiveMode(boolean enabled, Promise promise) {
+    Activity activity = getCurrentActivity();
+    if (activity == null) { promise.resolve(false); return; }
+    activity.runOnUiThread(() -> {
+      if (Build.VERSION.SDK_INT >= 30) {
+        WindowInsetsController controller = activity.getWindow().getInsetsController();
+        if (controller != null) {
+          if (enabled) {
+            controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            controller.hide(WindowInsets.Type.systemBars());
+          } else controller.show(WindowInsets.Type.systemBars());
+        }
+      } else {
+        activity.getWindow().getDecorView().setSystemUiVisibility(enabled ? 5894 : 0);
+      }
+      promise.resolve(true);
+    });
+  }
+
+  @Override public void showInputMethodPicker() {
+    InputMethodManager manager = (InputMethodManager) getReactApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+    manager.showInputMethodPicker();
+  }
 
   @Override public void getCapabilities(Promise promise) {
     try {

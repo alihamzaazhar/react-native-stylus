@@ -61,3 +61,18 @@ export interface StylusCapabilities {
   lowLatencyFrontBufferSupported: boolean;
   devices: StylusDevice[];
 }
+
+export interface StylusPlatformFeatures {
+  androidApiLevel: number;
+  handwritingTextFields: boolean;
+  handwritingDelegation: boolean;
+  handwritingBounds: boolean;
+  canceledPalmFlag: boolean;
+  motionPrediction: boolean;
+  inkApi: boolean;
+  frontBuffer: boolean;
+  dragAndDrop: boolean;
+  customPointerIcons: boolean;
+  chromeOs: boolean;
+  largeScreen: boolean;
+}

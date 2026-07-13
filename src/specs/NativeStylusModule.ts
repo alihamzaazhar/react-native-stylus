@@ -5,6 +5,9 @@ export interface Spec extends TurboModule {
   getCapabilities(): Promise<string>;
   getStylusDevices(): Promise<string>;
   isStylusSupported(): Promise<boolean>;
+  getPlatformFeatures(): Promise<string>;
+  setImmersiveMode(enabled: boolean): Promise<boolean>;
+  showInputMethodPicker(): void;
   readonly onDevicesChanged: CodegenTypes.EventEmitter<string>;
 }
 

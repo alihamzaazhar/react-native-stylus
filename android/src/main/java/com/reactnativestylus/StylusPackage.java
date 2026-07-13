@@ -9,6 +9,7 @@ import com.facebook.react.module.model.ReactModuleInfoProvider;
 import com.facebook.react.uimanager.ViewManager;
 import java.util.Collections;
 import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 
 public final class StylusPackage extends BaseReactPackage {
@@ -22,6 +23,6 @@ public final class StylusPackage extends BaseReactPackage {
   }
 
   @NonNull @Override public List<ViewManager> createViewManagers(@NonNull ReactApplicationContext context) {
-    return Collections.singletonList(new StylusCanvasManager());
+    return Arrays.asList(new StylusCanvasManager(), new StylusHandwritingInputManager());
   }
 }

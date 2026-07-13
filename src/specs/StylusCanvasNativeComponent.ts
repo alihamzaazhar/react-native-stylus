@@ -6,6 +6,11 @@ export interface NativeProps extends ViewProps {
   strokeWidth?: CodegenTypes.Float;
   opacity?: CodegenTypes.Float;
   tool?: string;
+  brush?: string;
+  tiltEnabled?: boolean;
+  directionEnabled?: boolean;
+  brushPreviewEnabled?: boolean;
+  pointerIcon?: string;
   pressureEnabled?: boolean;
   predictionEnabled?: boolean;
   fingerDrawingEnabled?: boolean;

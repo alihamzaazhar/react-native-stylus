@@ -22,6 +22,11 @@ public final class StylusCanvasManager extends SimpleViewManager<StylusCanvasVie
   @ReactProp(name="strokeWidth", defaultFloat=6f) @Override public void setStrokeWidth(StylusCanvasView v, float x) { v.setStrokeWidth(x); }
   @ReactProp(name="opacity", defaultFloat=1f) @Override public void setOpacity(StylusCanvasView v, float x) { v.setOpacity(x); }
   @ReactProp(name="tool") @Override public void setTool(StylusCanvasView v, String x) { v.setTool(x); }
+  @ReactProp(name="brush") @Override public void setBrush(StylusCanvasView v, String x) { v.setBrush(x); }
+  @ReactProp(name="tiltEnabled", defaultBoolean=true) @Override public void setTiltEnabled(StylusCanvasView v, boolean x) { v.setTiltEnabled(x); }
+  @ReactProp(name="directionEnabled", defaultBoolean=true) @Override public void setDirectionEnabled(StylusCanvasView v, boolean x) { v.setDirectionEnabled(x); }
+  @ReactProp(name="brushPreviewEnabled", defaultBoolean=true) @Override public void setBrushPreviewEnabled(StylusCanvasView v, boolean x) { v.setBrushPreviewEnabled(x); }
+  @ReactProp(name="pointerIcon") @Override public void setPointerIcon(StylusCanvasView v, String x) { v.setPointerIconName(x); }
   @ReactProp(name="pressureEnabled", defaultBoolean=true) @Override public void setPressureEnabled(StylusCanvasView v, boolean x) { v.setPressureEnabled(x); }
   @ReactProp(name="predictionEnabled", defaultBoolean=true) @Override public void setPredictionEnabled(StylusCanvasView v, boolean x) { v.setPredictionEnabled(x); }
   @ReactProp(name="fingerDrawingEnabled", defaultBoolean=false) @Override public void setFingerDrawingEnabled(StylusCanvasView v, boolean x) { v.setFingerDrawingEnabled(x); }

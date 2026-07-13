@@ -8,6 +8,11 @@ export interface StylusCanvasProps extends ViewProps {
   strokeWidth?: number;
   opacity?: number;
   tool?: 'pen' | 'highlighter' | 'eraser';
+  brush?: 'pressurePen' | 'marker' | 'highlighter' | 'calligraphy' | 'custom';
+  tiltEnabled?: boolean;
+  directionEnabled?: boolean;
+  brushPreviewEnabled?: boolean;
+  pointerIcon?: 'default' | 'crosshair' | 'hand' | 'text' | 'none';
   pressureEnabled?: boolean;
   predictionEnabled?: boolean;
   fingerDrawingEnabled?: boolean;
