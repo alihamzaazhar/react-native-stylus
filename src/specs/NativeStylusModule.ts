@@ -8,6 +8,8 @@ export interface Spec extends TurboModule {
   getPlatformFeatures(): Promise<string>;
   setImmersiveMode(enabled: boolean): Promise<boolean>;
   showInputMethodPicker(): void;
+  setClipboardText(label: string, value: string): void;
+  getClipboardText(): Promise<string>;
   readonly onDevicesChanged: CodegenTypes.EventEmitter<string>;
 }
 

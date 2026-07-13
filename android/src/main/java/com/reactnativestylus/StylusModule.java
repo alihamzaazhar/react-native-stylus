@@ -1,6 +1,8 @@
 package com.reactnativestylus;
 
 import android.content.Context;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.hardware.input.InputManager;
 import android.os.Build;
 import android.app.Activity;
@@ -52,6 +54,17 @@ public final class StylusModule extends NativeStylusModuleSpec implements InputM
       result.put("customPointerIcons", Build.VERSION.SDK_INT >= 24);
       result.put("chromeOs", getReactApplicationContext().getPackageManager().hasSystemFeature("org.chromium.arc"));
       result.put("largeScreen", config.smallestScreenWidthDp >= 600);
+      result.put("foldable", getReactApplicationContext().getPackageManager().hasSystemFeature("android.hardware.sensor.hinge_angle"));
+      result.put("screenWidthDp", config.screenWidthDp);
+      result.put("screenHeightDp", config.screenHeightDp);
+      result.put("smallestScreenWidthDp", config.smallestScreenWidthDp);
+      result.put("orientation", config.orientation == Configuration.ORIENTATION_PORTRAIT ? "portrait" : config.orientation == Configuration.ORIENTATION_LANDSCAPE ? "landscape" : "undefined");
+      int external = 0;
+      for (int id : inputManager.getInputDeviceIds()) {
+        InputDevice device = inputManager.getInputDevice(id);
+        if (device != null && device.isExternal() && device.supportsSource(InputDevice.SOURCE_STYLUS)) external++;
+      }
+      result.put("externalStylusCount", external);
       promise.resolve(result.toString());
     } catch (Exception error) { promise.reject("stylus_platform_features", error); }
   }
@@ -78,6 +91,18 @@ public final class StylusModule extends NativeStylusModuleSpec implements InputM
   @Override public void showInputMethodPicker() {
     InputMethodManager manager = (InputMethodManager) getReactApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
     manager.showInputMethodPicker();
+  }
+
+  @Override public void setClipboardText(String label, String value) {
+    ClipboardManager clipboard = (ClipboardManager) getReactApplicationContext().getSystemService(Context.CLIPBOARD_SERVICE);
+    clipboard.setPrimaryClip(ClipData.newPlainText(label, value));
+  }
+
+  @Override public void getClipboardText(Promise promise) {
+    ClipboardManager clipboard = (ClipboardManager) getReactApplicationContext().getSystemService(Context.CLIPBOARD_SERVICE);
+    if (!clipboard.hasPrimaryClip() || clipboard.getPrimaryClip() == null || clipboard.getPrimaryClip().getItemCount() == 0) { promise.resolve(""); return; }
+    CharSequence value = clipboard.getPrimaryClip().getItemAt(0).coerceToText(getReactApplicationContext());
+    promise.resolve(value == null ? "" : value.toString());
   }
 
   @Override public void getCapabilities(Promise promise) {

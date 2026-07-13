@@ -10,3 +10,4 @@ export type {StylusDropZoneProps, StylusDragEvent} from './StylusDropZone';
 export type * from './types';
 export * from './document';
 export * from './input';
+export * from './annotation';

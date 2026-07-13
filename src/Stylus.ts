@@ -14,6 +14,8 @@ export const Stylus = {
   },
   setImmersiveMode: (enabled: boolean): Promise<boolean> => NativeStylusModule.setImmersiveMode(enabled),
   showInputMethodPicker: (): void => NativeStylusModule.showInputMethodPicker(),
+  setClipboardText: (value: string, label = 'Stylus content'): void => NativeStylusModule.setClipboardText(label, value),
+  getClipboardText: (): Promise<string> => NativeStylusModule.getClipboardText(),
   addDeviceChangeListener(listener: (devices: StylusDevice[]) => void): () => void {
     const subscription = NativeStylusModule.onDevicesChanged((json) => listener(JSON.parse(json) as StylusDevice[]));
     return () => subscription.remove();

@@ -1,6 +1,7 @@
 import type {
   StylusBounds,
   StylusDocument,
+  StylusDocumentMetadata,
   StylusLayer,
   StylusPoint,
   StylusShape,
@@ -16,11 +17,8 @@ function uniqueId(prefix: string): string {
 
 export function createStylusDocument(
   options: Partial<
-    Pick<
-      StylusDocument,
-      "id" | "width" | "height" | "backgroundColor" | "metadata"
-    >
-  > = {},
+    Pick<StylusDocument, "id" | "width" | "height" | "backgroundColor">
+  > & { metadata?: Partial<StylusDocumentMetadata> } = {},
 ): StylusDocument {
   const now = Date.now();
   return {

@@ -165,4 +165,29 @@ export interface StylusPlatformFeatures {
   customPointerIcons: boolean;
   chromeOs: boolean;
   largeScreen: boolean;
+  foldable: boolean;
+  screenWidthDp: number;
+  screenHeightDp: number;
+  smallestScreenWidthDp: number;
+  orientation: 'portrait' | 'landscape' | 'undefined';
+  externalStylusCount: number;
+}
+
+export interface StylusAnnotationTarget {
+  type: 'image' | 'pdf';
+  uri: string;
+  width: number;
+  height: number;
+  page?: number;
+  rotation?: 0 | 90 | 180 | 270;
+}
+
+export interface StylusAnnotationDocument extends StylusDocument {
+  target: StylusAnnotationTarget;
+}
+
+export interface StylusDocumentStorage {
+  load(key: string): Promise<string | null>;
+  save(key: string, value: string): Promise<void>;
+  remove?(key: string): Promise<void>;
 }
