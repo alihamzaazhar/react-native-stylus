@@ -27,6 +27,19 @@ export interface StylusInputEvent {
   canceled: boolean;
   palmRejected: boolean;
   diagnostics: StylusEventDiagnostics;
+  documentPoint?: {x: number; y: number};
+}
+
+export interface StylusViewport {
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+  rotation: number;
+}
+
+export interface StylusSelectionState {
+  strokeIds: string[];
+  bounds: StylusBounds | null;
 }
 
 export interface StylusEventDiagnostics {

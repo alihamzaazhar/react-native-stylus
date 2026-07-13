@@ -16,6 +16,8 @@ jest.mock('react-native-stylus', () => ({
     showInputMethodPicker: jest.fn(),
     setClipboardText: jest.fn(),
     getClipboardText: jest.fn(async () => ''),
+    exportDocumentPng: jest.fn(async () => '/tmp/document.png'),
+    flattenAnnotationPng: jest.fn(async () => '/tmp/annotation.png'),
   },
   StylusCanvas: 'StylusCanvas',
   StylusDropZone: 'StylusDropZone',

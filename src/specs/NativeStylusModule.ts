@@ -10,6 +10,8 @@ export interface Spec extends TurboModule {
   showInputMethodPicker(): void;
   setClipboardText(label: string, value: string): void;
   getClipboardText(): Promise<string>;
+  exportDocumentPng(documentJson: string, outputName: string, maxDimension: number): Promise<string>;
+  flattenAnnotationPng(annotationJson: string, outputName: string, maxDimension: number): Promise<string>;
   readonly onDevicesChanged: CodegenTypes.EventEmitter<string>;
 }
 

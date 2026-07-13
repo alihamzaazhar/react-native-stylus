@@ -3,16 +3,24 @@ package com.reactnativestylus;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.CancellationSignal;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.PointerIcon;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.HandwritingGesture;
+import android.view.inputmethod.InputConnection;
+import android.view.inputmethod.InputConnectionWrapper;
+import android.view.inputmethod.PreviewableHandwritingGesture;
 import android.widget.EditText;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.function.IntConsumer;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.WritableMap;
@@ -73,6 +81,25 @@ final class StylusHandwritingInputView extends EditText {
     return super.onHoverEvent(event);
   }
 
+  @Override public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+    InputConnection connection = super.onCreateInputConnection(outAttrs);
+    if (connection == null || Build.VERSION.SDK_INT < 34) return connection;
+    return new GestureInputConnection(connection);
+  }
+
+  private final class GestureInputConnection extends InputConnectionWrapper {
+    GestureInputConnection(InputConnection target) { super(target, false); }
+    @Override public void performHandwritingGesture(HandwritingGesture gesture, Executor executor, IntConsumer consumer) {
+      String type = gesture.getClass().getSimpleName(); emitGesture(type, "requested", 0);
+      IntConsumer wrapped = consumer == null ? null : result -> { emitGesture(type, "completed", result); consumer.accept(result); };
+      super.performHandwritingGesture(gesture, executor, wrapped);
+    }
+    @Override public boolean previewHandwritingGesture(PreviewableHandwritingGesture gesture, CancellationSignal signal) {
+      boolean handled = super.previewHandwritingGesture(gesture, signal);
+      emitGesture(gesture.getClass().getSimpleName(), "preview", handled ? 1 : 0); return handled;
+    }
+  }
+
   @Override protected void onDetachedFromWindow() {
     if (delegationId != null) DELEGATES.remove(delegationId);
     super.onDetachedFromWindow();
@@ -91,5 +118,10 @@ final class StylusHandwritingInputView extends EditText {
   @SuppressWarnings("deprecation") private void emitStatus(boolean focused) {
     WritableMap event = Arguments.createMap(); event.putBoolean("supported", Build.VERSION.SDK_INT >= 34); event.putBoolean("focused", focused);
     ((ReactContext) getContext()).getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "topHandwritingStatus", event);
+  }
+
+  @SuppressWarnings("deprecation") private void emitGesture(String type, String phase, int result) {
+    WritableMap event = Arguments.createMap(); event.putString("gestureType", type); event.putString("phase", phase); event.putInt("result", result);
+    ((ReactContext) getContext()).getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "topHandwritingGesture", event);
   }
 }

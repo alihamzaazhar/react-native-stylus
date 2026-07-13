@@ -9,6 +9,17 @@ export interface NativeProps extends ViewProps {
   brush?: string;
   brushDynamicsJson?: string;
   eraserMode?: string;
+  viewportScale?: CodegenTypes.Float;
+  viewportOffsetX?: CodegenTypes.Float;
+  viewportOffsetY?: CodegenTypes.Float;
+  viewportRotation?: CodegenTypes.Float;
+  viewportGesturesEnabled?: boolean;
+  resetViewportToken?: CodegenTypes.Int32;
+  selectionMode?: string;
+  selectedStrokeIdsJson?: string;
+  selectionTransformJson?: string;
+  deleteSelectionToken?: CodegenTypes.Int32;
+  duplicateSelectionToken?: CodegenTypes.Int32;
   tiltEnabled?: boolean;
   directionEnabled?: boolean;
   brushPreviewEnabled?: boolean;
@@ -31,6 +42,8 @@ export interface NativeProps extends ViewProps {
     canUndo: boolean;
     canRedo: boolean;
   }>>;
+  onViewportChanged?: CodegenTypes.DirectEventHandler<Readonly<{scale: CodegenTypes.Float; offsetX: CodegenTypes.Float; offsetY: CodegenTypes.Float; rotation: CodegenTypes.Float}>>;
+  onSelectionChanged?: CodegenTypes.DirectEventHandler<Readonly<{strokeIdsJson: string; boundsJson: string}>>;
 }
 
 export default codegenNativeComponent<NativeProps>('StylusCanvas') as HostComponent<NativeProps>;

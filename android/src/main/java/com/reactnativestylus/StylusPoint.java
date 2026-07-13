@@ -38,6 +38,14 @@ final class StylusPoint {
     buttons = event.getButtonState();
   }
 
+  StylusPoint(StylusPoint source, float x, float y) {
+    this.x = x; this.y = y; pressure = source.pressure; tilt = source.tilt;
+    orientation = source.orientation; distance = source.distance; size = source.size;
+    touchMajor = source.touchMajor; touchMinor = source.touchMinor; timestamp = source.timestamp;
+    pointerId = source.pointerId; toolType = source.toolType; buttons = source.buttons;
+    predicted = source.predicted; historical = source.historical;
+  }
+
   private static float axis(MotionEvent e, int axis, int pointer, int history) {
     return history >= 0 ? e.getHistoricalAxisValue(axis, pointer, history) : e.getAxisValue(axis, pointer);
   }

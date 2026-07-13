@@ -40,6 +40,7 @@ public final class StylusHandwritingInputManager extends SimpleViewManager<Stylu
   @Override public Map<String, Object> getExportedCustomDirectEventTypeConstants() {
     return MapBuilder.<String, Object>builder()
       .put("topTextChanged", MapBuilder.of("registrationName", "onTextChanged"))
-      .put("topHandwritingStatus", MapBuilder.of("registrationName", "onHandwritingStatus")).build();
+      .put("topHandwritingStatus", MapBuilder.of("registrationName", "onHandwritingStatus"))
+      .put("topHandwritingGesture", MapBuilder.of("registrationName", "onHandwritingGesture")).build();
   }
 }
