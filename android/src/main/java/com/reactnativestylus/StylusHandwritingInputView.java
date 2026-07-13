@@ -10,15 +10,20 @@ import android.view.MotionEvent;
 import android.view.PointerIcon;
 import android.view.View;
 import android.widget.EditText;
+import java.lang.ref.WeakReference;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
 
 final class StylusHandwritingInputView extends EditText {
+  private static final Map<String, WeakReference<StylusHandwritingInputView>> DELEGATES = new ConcurrentHashMap<>();
   private boolean updatingText;
   private boolean hoverFocusEnabled;
   private float boundsLeft, boundsTop, boundsRight, boundsBottom;
+  private String delegationId;
 
   StylusHandwritingInputView(Context context) {
     super(context);
@@ -43,6 +48,13 @@ final class StylusHandwritingInputView extends EditText {
 
   void setAutoHandwriting(boolean enabled) { if (Build.VERSION.SDK_INT >= 33) setAutoHandwritingEnabled(enabled); }
   void setHandwritingDelegateValue(boolean enabled) { if (Build.VERSION.SDK_INT >= 34) setIsHandwritingDelegate(enabled); }
+  void setDelegationId(String value) {
+    if (delegationId != null) DELEGATES.remove(delegationId);
+    delegationId = value;
+    if (value != null && !value.isEmpty()) DELEGATES.put(value, new WeakReference<>(this));
+  }
+  void setAllowedDelegatorPackage(String value) { if (Build.VERSION.SDK_INT >= 34) setAllowedHandwritingDelegatorPackage(value); }
+  void setDelegateFlags(int value) { if (Build.VERSION.SDK_INT >= 35) setHandwritingDelegateFlags(value); }
   void setHoverFocusEnabled(boolean enabled) { hoverFocusEnabled = enabled; }
   void setBoundsLeft(float value) { boundsLeft = value; applyBounds(); }
   void setBoundsTop(float value) { boundsTop = value; applyBounds(); }
@@ -59,6 +71,16 @@ final class StylusHandwritingInputView extends EditText {
   @Override public boolean onHoverEvent(MotionEvent event) {
     if (hoverFocusEnabled && event.isFromSource(InputDevice.SOURCE_STYLUS) && event.getActionMasked() == MotionEvent.ACTION_HOVER_ENTER) requestFocus();
     return super.onHoverEvent(event);
+  }
+
+  @Override protected void onDetachedFromWindow() {
+    if (delegationId != null) DELEGATES.remove(delegationId);
+    super.onDetachedFromWindow();
+  }
+
+  static StylusHandwritingInputView findDelegate(String id) {
+    WeakReference<StylusHandwritingInputView> reference = id == null ? null : DELEGATES.get(id);
+    return reference == null ? null : reference.get();
   }
 
   @SuppressWarnings("deprecation") private void emitText(String text) {

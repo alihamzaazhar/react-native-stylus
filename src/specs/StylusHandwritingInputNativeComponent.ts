@@ -10,6 +10,9 @@ export interface NativeProps extends ViewProps {
   multiline?: boolean;
   autoHandwritingEnabled?: boolean;
   handwritingDelegate?: boolean;
+  delegationId?: string;
+  allowedDelegatorPackage?: string;
+  handwritingDelegateFlags?: CodegenTypes.Int32;
   handwritingBoundsLeft?: CodegenTypes.Float;
   handwritingBoundsTop?: CodegenTypes.Float;
   handwritingBoundsRight?: CodegenTypes.Float;

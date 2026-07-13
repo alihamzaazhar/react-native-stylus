@@ -23,6 +23,6 @@ public final class StylusPackage extends BaseReactPackage {
   }
 
   @NonNull @Override public List<ViewManager> createViewManagers(@NonNull ReactApplicationContext context) {
-    return Arrays.asList(new StylusCanvasManager(), new StylusHandwritingInputManager());
+    return Arrays.asList(new StylusCanvasManager(), new StylusHandwritingInputManager(), new StylusHandwritingDelegatorManager(), new StylusDropZoneManager());
   }
 }

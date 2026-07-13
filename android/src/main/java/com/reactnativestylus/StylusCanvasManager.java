@@ -29,6 +29,9 @@ public final class StylusCanvasManager extends SimpleViewManager<StylusCanvasVie
   @ReactProp(name="directionEnabled", defaultBoolean=true) @Override public void setDirectionEnabled(StylusCanvasView v, boolean x) { v.setDirectionEnabled(x); }
   @ReactProp(name="brushPreviewEnabled", defaultBoolean=true) @Override public void setBrushPreviewEnabled(StylusCanvasView v, boolean x) { v.setBrushPreviewEnabled(x); }
   @ReactProp(name="pointerIcon") @Override public void setPointerIcon(StylusCanvasView v, String x) { v.setPointerIconName(x); }
+  @ReactProp(name="pointerIconResource") @Override public void setPointerIconResource(StylusCanvasView v, String x) { v.setPointerIconResource(x); }
+  @ReactProp(name="pointerIconHotspotX", defaultFloat=0f) @Override public void setPointerIconHotspotX(StylusCanvasView v, float x) { v.setPointerIconHotspotX(x); }
+  @ReactProp(name="pointerIconHotspotY", defaultFloat=0f) @Override public void setPointerIconHotspotY(StylusCanvasView v, float x) { v.setPointerIconHotspotY(x); }
   @ReactProp(name="pressureEnabled", defaultBoolean=true) @Override public void setPressureEnabled(StylusCanvasView v, boolean x) { v.setPressureEnabled(x); }
   @ReactProp(name="predictionEnabled", defaultBoolean=true) @Override public void setPredictionEnabled(StylusCanvasView v, boolean x) { v.setPredictionEnabled(x); }
   @ReactProp(name="fingerDrawingEnabled", defaultBoolean=false) @Override public void setFingerDrawingEnabled(StylusCanvasView v, boolean x) { v.setFingerDrawingEnabled(x); }

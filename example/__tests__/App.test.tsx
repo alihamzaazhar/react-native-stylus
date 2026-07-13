@@ -16,6 +16,8 @@ jest.mock('react-native-stylus', () => ({
     showInputMethodPicker: jest.fn(),
   },
   StylusCanvas: 'StylusCanvas',
+  StylusDropZone: 'StylusDropZone',
+  StylusHandwritingDelegator: 'StylusHandwritingDelegator',
   StylusHandwritingInput: 'StylusHandwritingInput',
 }));
 
