@@ -13,6 +13,9 @@ export interface NativeProps extends ViewProps {
   directionEnabled?: boolean;
   brushPreviewEnabled?: boolean;
   pointerIcon?: string;
+  pointerIconResource?: string;
+  pointerIconHotspotX?: CodegenTypes.Float;
+  pointerIconHotspotY?: CodegenTypes.Float;
   pressureEnabled?: boolean;
   predictionEnabled?: boolean;
   fingerDrawingEnabled?: boolean;

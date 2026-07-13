@@ -11,6 +11,9 @@ export interface StylusHandwritingInputProps extends ViewProps {
   multiline?: boolean;
   autoHandwritingEnabled?: boolean;
   handwritingDelegate?: boolean;
+  delegationId?: string;
+  allowedDelegatorPackage?: string;
+  handwritingDelegateFlags?: number;
   handwritingBounds?: {left: number; top: number; right: number; bottom: number};
   selectAllOnFocus?: boolean;
   hoverFocusEnabled?: boolean;

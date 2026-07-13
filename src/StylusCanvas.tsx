@@ -15,6 +15,9 @@ export interface StylusCanvasProps extends ViewProps {
   directionEnabled?: boolean;
   brushPreviewEnabled?: boolean;
   pointerIcon?: 'default' | 'crosshair' | 'hand' | 'text' | 'none';
+  pointerIconResource?: string;
+  pointerIconHotspotX?: number;
+  pointerIconHotspotY?: number;
   pressureEnabled?: boolean;
   predictionEnabled?: boolean;
   fingerDrawingEnabled?: boolean;

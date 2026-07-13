@@ -3,6 +3,8 @@ package com.reactnativestylus;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.os.Build;
@@ -52,6 +54,8 @@ final class StylusCanvasView extends FrameLayout {
   private long previousEventTime;
   private boolean pressureEnabled = true, predictionEnabled = true, fingerDrawingEnabled, hoverEnabled = true;
   private boolean tiltEnabled = true, directionEnabled = true, brushPreviewEnabled = true;
+  private String pointerIconResource;
+  private float pointerIconHotspotX, pointerIconHotspotY;
   private float hoverX, hoverY, hoverPressure, hoverTilt;
   private boolean hovering;
   private int clearToken, undoToken, redoToken;
@@ -109,6 +113,20 @@ final class StylusCanvasView extends FrameLayout {
     else if ("text".equals(value)) type = PointerIcon.TYPE_TEXT;
     else if ("none".equals(value)) type = PointerIcon.TYPE_NULL;
     setPointerIcon(PointerIcon.getSystemIcon(getContext(), type));
+  }
+  void setPointerIconResource(String value) { pointerIconResource = value; applyPointerIconResource(); }
+  void setPointerIconHotspotX(float value) { pointerIconHotspotX = value; applyPointerIconResource(); }
+  void setPointerIconHotspotY(float value) { pointerIconHotspotY = value; applyPointerIconResource(); }
+  private void applyPointerIconResource() {
+    if (Build.VERSION.SDK_INT < 24 || pointerIconResource == null || pointerIconResource.isEmpty()) return;
+    int resource = getResources().getIdentifier(pointerIconResource, "drawable", getContext().getPackageName());
+    if (resource == 0) resource = getResources().getIdentifier(pointerIconResource, "mipmap", getContext().getPackageName());
+    if (resource == 0) return;
+    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), resource);
+    if (bitmap == null) return;
+    float x = clamp(pointerIconHotspotX, 0, Math.max(0, bitmap.getWidth() - 1));
+    float y = clamp(pointerIconHotspotY, 0, Math.max(0, bitmap.getHeight() - 1));
+    setPointerIcon(PointerIcon.create(bitmap, x, y));
   }
   void setPressureEnabled(boolean value) { pressureEnabled = value; }
   void setPredictionEnabled(boolean value) { predictionEnabled = value; }

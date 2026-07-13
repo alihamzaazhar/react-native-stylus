@@ -27,6 +27,9 @@ public final class StylusHandwritingInputManager extends SimpleViewManager<Stylu
   @ReactProp(name="multiline", defaultBoolean=false) @Override public void setMultiline(StylusHandwritingInputView v, boolean x) { v.setSingleLine(!x); v.setInputType(InputType.TYPE_CLASS_TEXT | (x ? InputType.TYPE_TEXT_FLAG_MULTI_LINE : 0)); }
   @ReactProp(name="autoHandwritingEnabled", defaultBoolean=true) @Override public void setAutoHandwritingEnabled(StylusHandwritingInputView v, boolean x) { v.setAutoHandwriting(x); }
   @ReactProp(name="handwritingDelegate", defaultBoolean=false) @Override public void setHandwritingDelegate(StylusHandwritingInputView v, boolean x) { v.setHandwritingDelegateValue(x); }
+  @ReactProp(name="delegationId") @Override public void setDelegationId(StylusHandwritingInputView v, String x) { v.setDelegationId(x); }
+  @ReactProp(name="allowedDelegatorPackage") @Override public void setAllowedDelegatorPackage(StylusHandwritingInputView v, String x) { v.setAllowedDelegatorPackage(x); }
+  @ReactProp(name="handwritingDelegateFlags", defaultInt=0) @Override public void setHandwritingDelegateFlags(StylusHandwritingInputView v, int x) { v.setDelegateFlags(x); }
   @ReactProp(name="handwritingBoundsLeft", defaultFloat=0f) @Override public void setHandwritingBoundsLeft(StylusHandwritingInputView v, float x) { v.setBoundsLeft(x); }
   @ReactProp(name="handwritingBoundsTop", defaultFloat=0f) @Override public void setHandwritingBoundsTop(StylusHandwritingInputView v, float x) { v.setBoundsTop(x); }
   @ReactProp(name="handwritingBoundsRight", defaultFloat=0f) @Override public void setHandwritingBoundsRight(StylusHandwritingInputView v, float x) { v.setBoundsRight(x); }

@@ -106,6 +106,44 @@ import {StylusHandwritingInput} from 'react-native-stylus';
 
 On Android 14+, compatible IMEs can write directly into the native editor. Use `Stylus.showInputMethodPicker()` to let the tester select a handwriting-capable keyboard.
 
+### Handwriting Delegation
+
+Link a placeholder and editor using the same `delegationId`. The placeholder focuses the editor natively during the active stylus sequence, as required by Android's handwriting delegation contract.
+
+```tsx
+<StylusHandwritingDelegator
+  delegationId="search-editor"
+  label="Write to search"
+  onActivate={console.log}
+/>
+<StylusHandwritingInput
+  delegationId="search-editor"
+  handwritingDelegate
+  value={query}
+  onChangeText={setQuery}
+/>
+```
+
+Android 14+ native WebView text widgets already enable compatible IME handwriting by default. Consumers using `react-native-webview` should keep its Android WebView current; this package does not ship or take ownership of a browser engine. Fully custom non-EditText editors must still implement their text layout, `InputConnection`, cursor data, and handwriting gesture semantics natively.
+
+### Drag, Drop, And Shortcuts
+
+```tsx
+const shortcut = createStylusShortcutHandler(
+  {stylusPrimary: 'erase', stylusSecondary: 'undo'},
+  {erase: enableEraser, undo},
+);
+
+<StylusDropZone draggable payload={JSON.stringify(selection)} onStylusDrag={console.log}>
+  <SelectionPreview />
+</StylusDropZone>
+<StylusDropZone dropEnabled onStylusDrag={handleDrop}>
+  <CanvasTarget />
+</StylusDropZone>
+```
+
+`StylusCanvas` also accepts `pointerIconResource` and hotspot coordinates for bitmap cursor resources supplied by the Android host application.
+
 ## Editable Documents
 
 The document API keeps native stroke capture separate from application editing state. It supports versioned JSON, layers, metadata, shapes, lasso selection, duplication, affine transforms, whole-stroke erasing, bounds, and SVG export.
