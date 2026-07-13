@@ -1,5 +1,5 @@
-import type {CodegenTypes, HostComponent, ViewProps} from 'react-native';
-import codegenNativeComponent from 'react-native/Libraries/Utilities/codegenNativeComponent';
+import {codegenNativeComponent} from 'react-native';
+import type {CodegenTypes, ViewProps} from 'react-native';
 
 export interface NativeProps extends ViewProps {
   text?: string;
@@ -24,4 +24,4 @@ export interface NativeProps extends ViewProps {
   onHandwritingGesture?: CodegenTypes.DirectEventHandler<Readonly<{gestureType: string; phase: string; result: CodegenTypes.Int32}>>;
 }
 
-export default codegenNativeComponent<NativeProps>('StylusHandwritingInput') as HostComponent<NativeProps>;
+export default codegenNativeComponent<NativeProps>('StylusHandwritingInput');

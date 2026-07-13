@@ -1,5 +1,5 @@
-import type {CodegenTypes, HostComponent, ViewProps} from 'react-native';
-import codegenNativeComponent from 'react-native/Libraries/Utilities/codegenNativeComponent';
+import {codegenNativeComponent} from 'react-native';
+import type {CodegenTypes, ViewProps} from 'react-native';
 
 export interface NativeProps extends ViewProps {
   color?: string;
@@ -46,4 +46,4 @@ export interface NativeProps extends ViewProps {
   onSelectionChanged?: CodegenTypes.DirectEventHandler<Readonly<{strokeIdsJson: string; boundsJson: string}>>;
 }
 
-export default codegenNativeComponent<NativeProps>('StylusCanvas') as HostComponent<NativeProps>;
+export default codegenNativeComponent<NativeProps>('StylusCanvas');
