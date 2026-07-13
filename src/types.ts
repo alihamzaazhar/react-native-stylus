@@ -51,6 +51,68 @@ export interface StylusStroke {
   opacity: number;
   tool: 'pen' | 'highlighter' | 'eraser';
   points: StylusPoint[];
+  layerId?: string;
+  metadata?: Record<string, string | number | boolean>;
+}
+
+export interface StylusLayer {
+  id: string;
+  name: string;
+  visible: boolean;
+  locked: boolean;
+  opacity: number;
+}
+
+export type StylusShapeType = 'line' | 'arrow' | 'rectangle' | 'ellipse';
+
+export interface StylusShape {
+  id: string;
+  type: StylusShapeType;
+  layerId: string;
+  color: string;
+  width: number;
+  opacity: number;
+  x: number;
+  y: number;
+  endX: number;
+  endY: number;
+  rotation?: number;
+  fill?: string;
+  metadata?: Record<string, string | number | boolean>;
+}
+
+export interface StylusDocumentMetadata {
+  title?: string;
+  author?: string;
+  createdAt: number;
+  updatedAt: number;
+  tags?: string[];
+  [key: string]: string | number | boolean | string[] | undefined;
+}
+
+export interface StylusDocument {
+  version: 1;
+  id: string;
+  width: number;
+  height: number;
+  backgroundColor: string;
+  activeLayerId: string;
+  layers: StylusLayer[];
+  strokes: StylusStroke[];
+  shapes: StylusShape[];
+  metadata: StylusDocumentMetadata;
+}
+
+export interface StylusBounds { x: number; y: number; width: number; height: number; }
+
+export interface StylusTransform {
+  translateX?: number;
+  translateY?: number;
+  scaleX?: number;
+  scaleY?: number;
+  rotation?: number;
+  originX?: number;
+  originY?: number;
 }
 
 export interface StylusCapabilities {
