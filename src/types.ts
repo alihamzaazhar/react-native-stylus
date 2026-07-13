@@ -91,6 +91,11 @@ export interface StylusStroke {
   width: number;
   opacity: number;
   tool: 'pen' | 'highlighter' | 'eraser';
+  brush?: 'pressurePen' | 'marker' | 'highlighter' | 'calligraphy' | 'custom';
+  brushDynamics?: StylusBrushDynamics;
+  pressureEnabled?: boolean;
+  tiltEnabled?: boolean;
+  directionEnabled?: boolean;
   points: StylusPoint[];
   layerId?: string;
   metadata?: Record<string, string | number | boolean>;

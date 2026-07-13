@@ -37,7 +37,10 @@ import org.json.JSONObject;
 final class StylusCanvasView extends FrameLayout {
   private static final class Stroke {
     String id = UUID.randomUUID().toString();
-    int color; float width, opacity; String tool;
+    int color; float width, opacity; String tool, brush;
+    float minimumWidth, maximumWidth, pressureGamma;
+    float velocitySensitivity, tiltSensitivity, directionSensitivity, smoothing;
+    boolean pressureEnabled, tiltEnabled, directionEnabled;
     final List<StylusPoint> points = new ArrayList<>();
   }
 
@@ -188,7 +191,19 @@ final class StylusCanvasView extends FrameLayout {
         JSONObject source = input.getJSONObject(i); Stroke stroke = new Stroke();
         stroke.id = source.optString("id", stroke.id); stroke.color = Color.parseColor(source.optString("color", "#000000"));
         stroke.width = (float) source.optDouble("width", 6); stroke.opacity = (float) source.optDouble("opacity", 1);
-        stroke.tool = source.optString("tool", "pen"); JSONArray points = source.optJSONArray("points");
+        stroke.tool = source.optString("tool", "pen"); stroke.brush = source.optString("brush", "pressurePen");
+        JSONObject dynamics = source.optJSONObject("brushDynamics");
+        stroke.minimumWidth = dynamics == null ? 0.5f : Math.max(0.1f, (float) dynamics.optDouble("minimumWidth", 0.5));
+        stroke.maximumWidth = dynamics == null ? 100f : Math.max(stroke.minimumWidth, (float) dynamics.optDouble("maximumWidth", 100));
+        stroke.pressureGamma = dynamics == null ? 1f : Math.max(0.05f, (float) dynamics.optDouble("pressureGamma", 1));
+        stroke.velocitySensitivity = dynamics == null ? 0f : clamp((float) dynamics.optDouble("velocitySensitivity", 0), 0f, 1f);
+        stroke.tiltSensitivity = dynamics == null ? 1f : clamp((float) dynamics.optDouble("tiltSensitivity", 1), 0f, 2f);
+        stroke.directionSensitivity = dynamics == null ? 1f : clamp((float) dynamics.optDouble("directionSensitivity", 1), 0f, 2f);
+        stroke.smoothing = dynamics == null ? 0f : clamp((float) dynamics.optDouble("smoothing", 0), 0f, 0.95f);
+        stroke.pressureEnabled = source.optBoolean("pressureEnabled", true);
+        stroke.tiltEnabled = source.optBoolean("tiltEnabled", true);
+        stroke.directionEnabled = source.optBoolean("directionEnabled", true);
+        JSONArray points = source.optJSONArray("points");
         if (points != null) for (int p = 0; p < points.length(); p++) stroke.points.add(new StylusPoint(points.getJSONObject(p)));
         strokes.add(stroke);
       }
@@ -298,6 +313,10 @@ final class StylusCanvasView extends FrameLayout {
   private void beginStroke(MotionEvent event) {
     Stroke stroke = new Stroke();
     stroke.color = color; stroke.width = strokeWidth / viewportScale; stroke.opacity = opacity;
+    stroke.brush = brush; stroke.minimumWidth = minimumWidth / viewportScale; stroke.maximumWidth = maximumWidth / viewportScale;
+    stroke.pressureGamma = pressureGamma; stroke.velocitySensitivity = velocitySensitivity;
+    stroke.tiltSensitivity = tiltSensitivity; stroke.directionSensitivity = directionSensitivity; stroke.smoothing = smoothing;
+    stroke.pressureEnabled = pressureEnabled; stroke.tiltEnabled = tiltEnabled; stroke.directionEnabled = directionEnabled;
     boolean hardwareEraser = event.getToolType(event.getActionIndex()) == MotionEvent.TOOL_TYPE_ERASER;
     stroke.tool = hardwareEraser ? "eraser" : tool;
     current = stroke;
@@ -350,8 +369,18 @@ final class StylusCanvasView extends FrameLayout {
   private static void addSegment(Stroke source, List<StylusPoint> points, List<Stroke> output) {
     if (points.size() < 2) return;
     Stroke segment = new Stroke();
-    segment.color = source.color; segment.width = source.width; segment.opacity = source.opacity; segment.tool = source.tool;
+    copyStrokeStyle(source, segment);
     segment.points.addAll(points); output.add(segment);
+  }
+
+  private static void copyStrokeStyle(Stroke source, Stroke target) {
+    target.color = source.color; target.width = source.width; target.opacity = source.opacity;
+    target.tool = source.tool; target.brush = source.brush;
+    target.minimumWidth = source.minimumWidth; target.maximumWidth = source.maximumWidth;
+    target.pressureGamma = source.pressureGamma; target.velocitySensitivity = source.velocitySensitivity;
+    target.tiltSensitivity = source.tiltSensitivity; target.directionSensitivity = source.directionSensitivity;
+    target.smoothing = source.smoothing; target.pressureEnabled = source.pressureEnabled;
+    target.tiltEnabled = source.tiltEnabled; target.directionEnabled = source.directionEnabled;
   }
 
   @Override protected void onDraw(Canvas canvas) {
@@ -363,18 +392,21 @@ final class StylusCanvasView extends FrameLayout {
       if ("eraser".equals(stroke.tool) || stroke.points.size() < 2) continue;
       paint.setColor(stroke.color);
       paint.setAlpha(Math.round(255 * stroke.opacity * ("highlighter".equals(stroke.tool) ? 0.45f : 1f)));
+      float renderedWidth = stroke.width;
       for (int i = 1; i < stroke.points.size(); i++) {
         StylusPoint a = stroke.points.get(i - 1), b = stroke.points.get(i);
-        float pressure = pressureEnabled ? Math.max(0.01f, (float) Math.pow(Math.max(0f, (a.pressure + b.pressure) * 0.5f), pressureGamma)) : 1f;
-        float tiltFactor = tiltEnabled && "calligraphy".equals(brush) ? 1f + Math.abs(b.tilt) * tiltSensitivity : 1f;
-        float directionFactor = directionEnabled && "calligraphy".equals(brush) ? 1f - directionSensitivity * 0.45f + directionSensitivity * 0.45f * Math.abs((float) Math.cos(b.orientation)) : 1f;
-        float brushFactor = "marker".equals(brush) ? 1.3f : 1f;
+        float pressure = stroke.pressureEnabled
+          ? 0.75f + 0.5f * (float) Math.pow(clamp((a.pressure + b.pressure) * 0.5f, 0f, 1f), stroke.pressureGamma)
+          : 1f;
+        float tiltFactor = stroke.tiltEnabled && "calligraphy".equals(stroke.brush) ? 1f + Math.abs(b.tilt) * stroke.tiltSensitivity : 1f;
+        float directionFactor = stroke.directionEnabled && "calligraphy".equals(stroke.brush) ? 1f - stroke.directionSensitivity * 0.45f + stroke.directionSensitivity * 0.45f * Math.abs((float) Math.cos(b.orientation)) : 1f;
+        float brushFactor = "marker".equals(stroke.brush) ? 1.3f : 1f;
         float delta = Math.max(1f, b.timestamp - a.timestamp);
         float velocity = (float) Math.hypot(b.x - a.x, b.y - a.y) / delta;
-        float velocityFactor = 1f - velocitySensitivity * Math.min(0.8f, velocity / 4f);
-        float targetWidth = clamp(stroke.width * pressure * tiltFactor * directionFactor * brushFactor * velocityFactor, minimumWidth, maximumWidth);
-        float previousWidth = paint.getStrokeWidth();
-        paint.setStrokeWidth(previousWidth * smoothing + targetWidth * (1f - smoothing));
+        float velocityFactor = 1f - stroke.velocitySensitivity * Math.min(0.8f, velocity / 4f);
+        float targetWidth = clamp(stroke.width * pressure * tiltFactor * directionFactor * brushFactor * velocityFactor, stroke.minimumWidth, stroke.maximumWidth);
+        renderedWidth = i == 1 ? targetWidth : renderedWidth * stroke.smoothing + targetWidth * (1f - stroke.smoothing);
+        paint.setStrokeWidth(renderedWidth);
         canvas.drawLine(a.x, a.y, b.x, b.y, paint);
       }
     }
@@ -437,7 +469,12 @@ final class StylusCanvasView extends FrameLayout {
       try {
         JSONObject item = new JSONObject(); item.put("id", stroke.id);
         item.put("color", String.format("#%08X", stroke.color)); item.put("width", stroke.width);
-        item.put("opacity", stroke.opacity); item.put("tool", stroke.tool);
+        item.put("opacity", stroke.opacity); item.put("tool", stroke.tool); item.put("brush", stroke.brush);
+        item.put("pressureEnabled", stroke.pressureEnabled); item.put("tiltEnabled", stroke.tiltEnabled); item.put("directionEnabled", stroke.directionEnabled);
+        JSONObject dynamics = new JSONObject(); dynamics.put("minimumWidth", stroke.minimumWidth); dynamics.put("maximumWidth", stroke.maximumWidth);
+        dynamics.put("pressureGamma", stroke.pressureGamma); dynamics.put("velocitySensitivity", stroke.velocitySensitivity);
+        dynamics.put("tiltSensitivity", stroke.tiltSensitivity); dynamics.put("directionSensitivity", stroke.directionSensitivity);
+        dynamics.put("smoothing", stroke.smoothing); item.put("brushDynamics", dynamics);
         JSONArray points = new JSONArray(); for (StylusPoint point : stroke.points) points.put(point.json());
         item.put("points", points); array.put(item);
       } catch (Exception ignored) { }
@@ -511,7 +548,7 @@ final class StylusCanvasView extends FrameLayout {
     List<Stroke> copies = new ArrayList<>(); selectedStrokeIds.clear();
     for (Stroke source : strokes) {
       if (!sourceIds.contains(source.id)) continue;
-      Stroke copy = new Stroke(); copy.color = source.color; copy.width = source.width; copy.opacity = source.opacity; copy.tool = source.tool;
+      Stroke copy = new Stroke(); copyStrokeStyle(source, copy);
       for (StylusPoint point : source.points) copy.points.add(new StylusPoint(point, point.x + 16 / viewportScale, point.y + 16 / viewportScale));
       copies.add(copy);
     }
