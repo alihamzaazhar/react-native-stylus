@@ -14,6 +14,8 @@ jest.mock('react-native-stylus', () => ({
     isSupported: jest.fn(async () => false),
     setImmersiveMode: jest.fn(async () => true),
     showInputMethodPicker: jest.fn(),
+    setClipboardText: jest.fn(),
+    getClipboardText: jest.fn(async () => ''),
   },
   StylusCanvas: 'StylusCanvas',
   StylusDropZone: 'StylusDropZone',

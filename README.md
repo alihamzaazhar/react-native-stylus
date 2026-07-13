@@ -190,6 +190,36 @@ await Stylus.setImmersiveMode(true);
 Stylus.showInputMethodPicker();
 ```
 
+## Image And PDF Annotation
+
+Annotation documents preserve the source URI/page and editable ink in source-document coordinates. Render the source with your preferred image or PDF component, place `StylusCanvas` above it, and use the viewport mapping helpers when the source is letterboxed.
+
+```ts
+const annotation = createAnnotationDocument({
+  type: 'pdf',
+  uri: selectedPdfUri,
+  page: 3,
+  width: 1440,
+  height: 1920,
+});
+
+const sourcePoint = viewportPointToAnnotation(
+  annotation,
+  eventX,
+  eventY,
+  viewportWidth,
+  viewportHeight,
+);
+
+const autosave = new StylusAutosaveController(storageAdapter, annotation.id);
+autosave.schedule(annotation);
+await autosave.flush(annotation);
+
+Stylus.setClipboardText(serializeAnnotationDocument(annotation), 'Stylus annotation');
+```
+
+The storage interface is injectable, so applications can use AsyncStorage, SQLite, files, or cloud persistence without adding those dependencies to this package. PDF/image flattening remains the responsibility of the selected renderer; the library exports editable JSON and SVG overlays.
+
 ## Example
 
 The standalone React Native 0.86 app in `example/` has separate screens for capabilities, raw motion data, AndroidX Ink drawing, handwriting, hover, palm cancellation, selection/navigation, and immersive mode.
