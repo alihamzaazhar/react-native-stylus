@@ -1,0 +1,234 @@
+package com.reactnativestylus;
+
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.os.Build;
+import android.view.InputDevice;
+import android.view.MotionEvent;
+import android.view.View;
+import androidx.input.motionprediction.MotionEventPredictor;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.uimanager.events.RCTEventEmitter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+final class StylusCanvasView extends View {
+  private static final class Stroke {
+    String id = UUID.randomUUID().toString();
+    int color; float width, opacity; String tool;
+    final List<StylusPoint> points = new ArrayList<>();
+  }
+
+  private final List<Stroke> strokes = new ArrayList<>();
+  private final List<Stroke> redo = new ArrayList<>();
+  private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
+  private final MotionEventPredictor predictor;
+  private Stroke current;
+  private int color = Color.BLACK;
+  private float strokeWidth = 6f, opacity = 1f;
+  private String tool = "pen";
+  private boolean pressureEnabled = true, predictionEnabled = true, fingerDrawingEnabled, hoverEnabled = true;
+  private int clearToken, undoToken, redoToken;
+
+  StylusCanvasView(Context context) {
+    super(context);
+    setBackgroundColor(Color.TRANSPARENT);
+    setFocusable(true);
+    predictor = MotionEventPredictor.newInstance(this);
+    paint.setStrokeCap(Paint.Cap.ROUND);
+    paint.setStrokeJoin(Paint.Join.ROUND);
+    paint.setStyle(Paint.Style.STROKE);
+  }
+
+  void setColor(String value) { try { color = Color.parseColor(value); } catch (Exception ignored) { } }
+  void setStrokeWidth(float value) { strokeWidth = Math.max(0.5f, value); }
+  void setOpacity(float value) { opacity = Math.max(0f, Math.min(1f, value)); }
+  void setTool(String value) { tool = value == null ? "pen" : value; }
+  void setPressureEnabled(boolean value) { pressureEnabled = value; }
+  void setPredictionEnabled(boolean value) { predictionEnabled = value; }
+  void setFingerDrawingEnabled(boolean value) { fingerDrawingEnabled = value; }
+  void setHoverEnabled(boolean value) { hoverEnabled = value; }
+  void setClearToken(int value) { if (value != clearToken) { clearToken = value; clear(); } }
+  void setUndoToken(int value) { if (value != undoToken) { undoToken = value; undo(); } }
+  void setRedoToken(int value) { if (value != redoToken) { redoToken = value; redo(); } }
+  void setStrokesJson(String value) {
+    if (value == null) return;
+    try {
+      JSONArray input = new JSONArray(value);
+      strokes.clear(); redo.clear(); current = null;
+      for (int i = 0; i < input.length(); i++) {
+        JSONObject source = input.getJSONObject(i); Stroke stroke = new Stroke();
+        stroke.id = source.optString("id", stroke.id); stroke.color = Color.parseColor(source.optString("color", "#000000"));
+        stroke.width = (float) source.optDouble("width", 6); stroke.opacity = (float) source.optDouble("opacity", 1);
+        stroke.tool = source.optString("tool", "pen"); JSONArray points = source.optJSONArray("points");
+        if (points != null) for (int p = 0; p < points.length(); p++) stroke.points.add(new StylusPoint(points.getJSONObject(p)));
+        strokes.add(stroke);
+      }
+      invalidate();
+    } catch (Exception ignored) { }
+  }
+
+  @Override public boolean onHoverEvent(MotionEvent event) {
+    if (!hoverEnabled || !isStylus(event)) return super.onHoverEvent(event);
+    emitInput(event, actionName(event.getActionMasked()), false);
+    return true;
+  }
+
+  @Override public boolean onGenericMotionEvent(MotionEvent event) {
+    int action = event.getActionMasked();
+    if (isStylus(event) && (action == MotionEvent.ACTION_BUTTON_PRESS || action == MotionEvent.ACTION_BUTTON_RELEASE)) {
+      emitInput(event, actionName(action), false);
+      return true;
+    }
+    return super.onGenericMotionEvent(event);
+  }
+
+  @Override public boolean onTouchEvent(MotionEvent event) {
+    int action = event.getActionMasked();
+    boolean stylus = isStylus(event);
+    if (!stylus && !fingerDrawingEnabled) return false;
+    predictor.record(event);
+    boolean canceled = action == MotionEvent.ACTION_CANCEL ||
+      (Build.VERSION.SDK_INT >= 33 && (event.getFlags() & MotionEvent.FLAG_CANCELED) != 0);
+
+    if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_DOWN) {
+      getParent().requestDisallowInterceptTouchEvent(true);
+      beginStroke(event);
+    } else if (action == MotionEvent.ACTION_MOVE && current != null) {
+      appendHistory(event);
+      appendCurrent(event);
+      if ("eraser".equals(current.tool)) eraseAt(event.getX(), event.getY(), current.width * 2f);
+    } else if ((action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP) && current != null) {
+      appendCurrent(event);
+      if (canceled) strokes.remove(current);
+      current = null;
+      redo.clear();
+      emitStrokes();
+      getParent().requestDisallowInterceptTouchEvent(false);
+    } else if (action == MotionEvent.ACTION_CANCEL) {
+      if (current != null) strokes.remove(current);
+      current = null;
+      emitStrokes();
+      getParent().requestDisallowInterceptTouchEvent(false);
+    }
+    emitInput(event, actionName(action), canceled);
+    invalidate();
+    return true;
+  }
+
+  private void beginStroke(MotionEvent event) {
+    Stroke stroke = new Stroke();
+    stroke.color = color; stroke.width = strokeWidth; stroke.opacity = opacity;
+    boolean hardwareEraser = event.getToolType(event.getActionIndex()) == MotionEvent.TOOL_TYPE_ERASER;
+    stroke.tool = hardwareEraser ? "eraser" : tool;
+    current = stroke;
+    strokes.add(stroke);
+    appendCurrent(event);
+  }
+
+  private void appendHistory(MotionEvent event) {
+    for (int h = 0; h < event.getHistorySize(); h++) current.points.add(new StylusPoint(event, 0, h, false));
+  }
+
+  private void appendCurrent(MotionEvent event) { current.points.add(new StylusPoint(event, 0, -1, false)); }
+
+  private void eraseAt(float x, float y, float radius) {
+    for (int s = strokes.size() - 1; s >= 0; s--) {
+      Stroke stroke = strokes.get(s);
+      if (stroke == current) continue;
+      for (StylusPoint point : stroke.points) {
+        float dx = point.x - x, dy = point.y - y;
+        if (dx * dx + dy * dy <= radius * radius) { strokes.remove(s); break; }
+      }
+    }
+  }
+
+  @Override protected void onDraw(Canvas canvas) {
+    super.onDraw(canvas);
+    for (Stroke stroke : strokes) {
+      if ("eraser".equals(stroke.tool) || stroke.points.size() < 2) continue;
+      paint.setColor(stroke.color);
+      paint.setAlpha(Math.round(255 * stroke.opacity * ("highlighter".equals(stroke.tool) ? 0.45f : 1f)));
+      for (int i = 1; i < stroke.points.size(); i++) {
+        StylusPoint a = stroke.points.get(i - 1), b = stroke.points.get(i);
+        float pressure = pressureEnabled ? Math.max(0.08f, (a.pressure + b.pressure) * 0.5f) : 1f;
+        paint.setStrokeWidth(stroke.width * pressure);
+        canvas.drawLine(a.x, a.y, b.x, b.y, paint);
+      }
+    }
+  }
+
+  private void emitInput(MotionEvent event, String action, boolean canceled) {
+    try {
+      JSONObject payload = new JSONObject();
+      StylusPoint point = new StylusPoint(event, event.getActionIndex(), -1, false);
+      JSONArray history = new JSONArray();
+      for (int h = 0; h < event.getHistorySize(); h++) history.put(new StylusPoint(event, 0, h, false).json());
+      JSONObject predicted = null;
+      if (predictionEnabled && event.getActionMasked() == MotionEvent.ACTION_MOVE) {
+        MotionEvent prediction = predictor.predict();
+        if (prediction != null) { predicted = new StylusPoint(prediction, 0, -1, true).json(); prediction.recycle(); }
+      }
+      payload.put("action", action); payload.put("point", point.json()); payload.put("history", history);
+      payload.put("predicted", predicted == null ? JSONObject.NULL : predicted);
+      payload.put("canceled", canceled); payload.put("palmRejected", canceled && point.toolType == MotionEvent.TOOL_TYPE_FINGER);
+      WritableMap body = Arguments.createMap(); body.putString("payload", payload.toString());
+      emit("topStylusEvent", body);
+    } catch (Exception ignored) { }
+  }
+
+  private void emitStrokes() {
+    WritableMap body = Arguments.createMap();
+    body.putString("strokesJson", strokesJson().toString());
+    body.putInt("strokeCount", strokes.size()); body.putBoolean("canUndo", !strokes.isEmpty()); body.putBoolean("canRedo", !redo.isEmpty());
+    emit("topStrokesChanged", body);
+  }
+
+  @SuppressWarnings("deprecation") private void emit(String name, WritableMap body) {
+    ((com.facebook.react.bridge.ReactContext) getContext()).getJSModule(RCTEventEmitter.class).receiveEvent(getId(), name, body);
+  }
+
+  private JSONArray strokesJson() {
+    JSONArray array = new JSONArray();
+    for (Stroke stroke : strokes) {
+      try {
+        JSONObject item = new JSONObject(); item.put("id", stroke.id);
+        item.put("color", String.format("#%08X", stroke.color)); item.put("width", stroke.width);
+        item.put("opacity", stroke.opacity); item.put("tool", stroke.tool);
+        JSONArray points = new JSONArray(); for (StylusPoint point : stroke.points) points.put(point.json());
+        item.put("points", points); array.put(item);
+      } catch (Exception ignored) { }
+    }
+    return array;
+  }
+
+  private void clear() { strokes.clear(); redo.clear(); current = null; invalidate(); emitStrokes(); }
+  private void undo() { if (!strokes.isEmpty()) { redo.add(strokes.remove(strokes.size() - 1)); invalidate(); emitStrokes(); } }
+  private void redo() { if (!redo.isEmpty()) { strokes.add(redo.remove(redo.size() - 1)); invalidate(); emitStrokes(); } }
+
+  private static boolean isStylus(MotionEvent event) {
+    return event.isFromSource(InputDevice.SOURCE_STYLUS) || event.getToolType(event.getActionIndex()) == MotionEvent.TOOL_TYPE_STYLUS || event.getToolType(event.getActionIndex()) == MotionEvent.TOOL_TYPE_ERASER;
+  }
+
+  private static String actionName(int action) {
+    switch (action) {
+      case MotionEvent.ACTION_DOWN: case MotionEvent.ACTION_POINTER_DOWN: return "down";
+      case MotionEvent.ACTION_MOVE: return "move";
+      case MotionEvent.ACTION_UP: case MotionEvent.ACTION_POINTER_UP: return "up";
+      case MotionEvent.ACTION_CANCEL: return "cancel";
+      case MotionEvent.ACTION_HOVER_ENTER: return "hoverEnter";
+      case MotionEvent.ACTION_HOVER_MOVE: return "hoverMove";
+      case MotionEvent.ACTION_HOVER_EXIT: return "hoverExit";
+      case MotionEvent.ACTION_BUTTON_PRESS: return "buttonPress";
+      case MotionEvent.ACTION_BUTTON_RELEASE: return "buttonRelease";
+      default: return "move";
+    }
+  }
+}

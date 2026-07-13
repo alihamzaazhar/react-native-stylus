@@ -1,0 +1,26 @@
+apply plugin: "com.android.library"
+apply plugin: "com.facebook.react"
+
+android {
+  namespace "com.reactnativestylus"
+  compileSdkVersion 36
+
+  defaultConfig {
+    minSdkVersion 24
+    targetSdkVersion 36
+    consumerProguardFiles "consumer-rules.pro"
+  }
+}
+
+react {
+  root = file("..")
+  jsRootDir = file("..")
+  reactNativeDir = file("../../react-native")
+  codegenDir = file("../../@react-native/codegen")
+  codegenJavaPackageName = "com.reactnativestylus"
+}
+
+dependencies {
+  implementation("com.facebook.react:react-android")
+  implementation("androidx.input:input-motionprediction:1.0.0-beta01")
+}

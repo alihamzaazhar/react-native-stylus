@@ -1,0 +1,41 @@
+{
+  "name": "react-native-stylus",
+  "version": "0.1.0",
+  "description": "Low-latency Android stylus input and drawing for React Native",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "react-native": "src/index.ts",
+  "files": [
+    "src",
+    "android/build.gradle",
+    "android/consumer-rules.pro",
+    "android/gradle.properties",
+    "android/settings.gradle",
+    "android/src",
+    "react-native.config.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": ["react-native", "android", "stylus", "drawing", "pressure", "tilt", "hover", "palm-rejection", "motion-prediction", "turbomodule", "fabric"],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "pack:check": "npm pack --dry-run"
+  },
+  "codegenConfig": {
+    "name": "StylusModule",
+    "type": "all",
+    "jsSrcsDir": "src",
+    "android": { "javaPackageName": "com.reactnativestylus" }
+  },
+  "peerDependencies": {
+    "react": ">=19.2.3",
+    "react-native": ">=0.86.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "react": "19.2.3",
+    "react-native": "0.86.0",
+    "typescript": "^5.5.4"
+  }
+}
