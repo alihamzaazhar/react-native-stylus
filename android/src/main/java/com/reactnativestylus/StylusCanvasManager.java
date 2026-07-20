@@ -57,6 +57,7 @@ public final class StylusCanvasManager extends SimpleViewManager<StylusCanvasVie
       .put("topStylusEvent", MapBuilder.of("registrationName", "onStylusEvent"))
       .put("topStrokesChanged", MapBuilder.of("registrationName", "onStrokesChanged"))
       .put("topViewportChanged", MapBuilder.of("registrationName", "onViewportChanged"))
-      .put("topSelectionChanged", MapBuilder.of("registrationName", "onSelectionChanged")).build();
+      .put("topSelectionChanged", MapBuilder.of("registrationName", "onSelectionChanged"))
+      .put("topColorPicked", MapBuilder.of("registrationName", "onColorPicked")).build();
   }
 }

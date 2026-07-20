@@ -236,6 +236,7 @@ final class StylusCanvasView extends FrameLayout {
     boolean stylus = isStylus(event);
     if (!stylus && viewportGesturesEnabled) return handleViewportGesture(event);
     if ("lasso".equals(selectionMode)) return handleLasso(event);
+    if ("eyedropper".equals(selectionMode)) return handleEyedropper(event);
     if (!stylus && !fingerDrawingEnabled) return false;
     predictor.record(event);
     boolean canceled = action == MotionEvent.ACTION_CANCEL ||
@@ -294,6 +295,26 @@ final class StylusCanvasView extends FrameLayout {
     else if (action == MotionEvent.ACTION_UP) { lasso.add(point); selectLasso(); lasso.clear(); getParent().requestDisallowInterceptTouchEvent(false); }
     else if (action == MotionEvent.ACTION_CANCEL) { lasso.clear(); getParent().requestDisallowInterceptTouchEvent(false); }
     invalidate(); return true;
+  }
+
+  private boolean handleEyedropper(MotionEvent event) {
+    if (event.getActionMasked() != MotionEvent.ACTION_DOWN) return true;
+    PointF sample = viewToDocument(event.getX(), event.getY());
+    Stroke nearest = null; float nearestDistance = Float.MAX_VALUE;
+    for (Stroke stroke : strokes) {
+      if ("eraser".equals(stroke.tool)) continue;
+      for (StylusPoint point : stroke.points) {
+        float dx = point.x - sample.x, dy = point.y - sample.y;
+        float distance = dx * dx + dy * dy;
+        if (distance < nearestDistance) { nearestDistance = distance; nearest = stroke; }
+      }
+    }
+    if (nearest != null) {
+      WritableMap body = Arguments.createMap();
+      body.putString("color", String.format("#%06X", nearest.color & 0xFFFFFF));
+      emit("topColorPicked", body);
+    }
+    return true;
   }
 
   @Override public boolean onInterceptTouchEvent(MotionEvent event) {
