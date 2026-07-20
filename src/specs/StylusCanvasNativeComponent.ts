@@ -44,6 +44,7 @@ export interface NativeProps extends ViewProps {
   }>>;
   onViewportChanged?: CodegenTypes.DirectEventHandler<Readonly<{scale: CodegenTypes.Float; offsetX: CodegenTypes.Float; offsetY: CodegenTypes.Float; rotation: CodegenTypes.Float}>>;
   onSelectionChanged?: CodegenTypes.DirectEventHandler<Readonly<{strokeIdsJson: string; boundsJson: string}>>;
+  onColorPicked?: CodegenTypes.DirectEventHandler<Readonly<{color: string}>>;
 }
 
 export default codegenNativeComponent<NativeProps>('StylusCanvas');

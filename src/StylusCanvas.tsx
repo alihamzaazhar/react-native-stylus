@@ -14,7 +14,7 @@ export interface StylusCanvasProps extends ViewProps {
   viewport?: Partial<StylusViewport>;
   viewportGesturesEnabled?: boolean;
   resetViewportToken?: number;
-  selectionMode?: 'none' | 'lasso';
+  selectionMode?: 'none' | 'lasso' | 'eyedropper';
   selectedStrokeIds?: string[];
   selectionTransform?: StylusTransform & {token: number};
   deleteSelectionToken?: number;
@@ -38,14 +38,16 @@ export interface StylusCanvasProps extends ViewProps {
   onStrokesChange?: (strokes: StylusStroke[], state: {canUndo: boolean; canRedo: boolean}) => void;
   onViewportChange?: (viewport: StylusViewport) => void;
   onSelectionChange?: (selection: StylusSelectionState) => void;
+  onColorPick?: (color: string) => void;
 }
 
-export function StylusCanvas({strokes, brushDynamics, viewport, selectedStrokeIds, selectionTransform, onStylusEvent, onStrokesChange, onViewportChange, onSelectionChange, ...props}: StylusCanvasProps) {
+export function StylusCanvas({strokes, brushDynamics, viewport, selectedStrokeIds, selectionTransform, onStylusEvent, onStrokesChange, onViewportChange, onSelectionChange, onColorPick, ...props}: StylusCanvasProps) {
   return <NativeStylusCanvas {...props} viewportScale={viewport?.scale} viewportOffsetX={viewport?.offsetX} viewportOffsetY={viewport?.offsetY} viewportRotation={viewport?.rotation}
     brushDynamicsJson={brushDynamics ? JSON.stringify(brushDynamics) : undefined} selectedStrokeIdsJson={selectedStrokeIds ? JSON.stringify(selectedStrokeIds) : undefined}
     selectionTransformJson={selectionTransform ? JSON.stringify(selectionTransform) : undefined} strokesJson={strokes ? JSON.stringify(strokes) : undefined}
     onStylusEvent={onStylusEvent ? (event) => onStylusEvent(JSON.parse(event.nativeEvent.payload) as StylusInputEvent) : undefined}
     onStrokesChanged={onStrokesChange ? (event) => onStrokesChange(JSON.parse(event.nativeEvent.strokesJson) as StylusStroke[], event.nativeEvent) : undefined}
     onViewportChanged={onViewportChange ? event => onViewportChange(event.nativeEvent) : undefined}
-    onSelectionChanged={onSelectionChange ? event => onSelectionChange({strokeIds: JSON.parse(event.nativeEvent.strokeIdsJson) as string[], bounds: event.nativeEvent.boundsJson ? JSON.parse(event.nativeEvent.boundsJson) : null}) : undefined} />;
+    onSelectionChanged={onSelectionChange ? event => onSelectionChange({strokeIds: JSON.parse(event.nativeEvent.strokeIdsJson) as string[], bounds: event.nativeEvent.boundsJson ? JSON.parse(event.nativeEvent.boundsJson) : null}) : undefined}
+    onColorPicked={onColorPick ? event => onColorPick(event.nativeEvent.color) : undefined} />;
 }
